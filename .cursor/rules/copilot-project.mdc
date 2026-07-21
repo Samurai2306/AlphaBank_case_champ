@@ -1,0 +1,34 @@
+---
+description: AI Business Copilot — продукт, стек, запреты для агентов
+alwaysApply: true
+---
+
+# AI Business Copilot
+
+## Продукт
+
+Проактивный AI Business Copilot для молодых предпринимателей (beauty, 17–25 / 18–35). Не «чат с GPT»: связка чата с банковскими действиями через Generative UI (SDUI).
+
+Документация: `docs/00-README.md`. Контракты demo↔prod не ломать.
+
+## Стек
+
+- **Demo code:** Next.js 15 + **Go API** (agents/tools/SSE) + Postgres/pgvector + Redis. Не FastAPI.
+- **Production (docs first):** React Native, Go BFF + Python AI + Java core, Kafka, vLLM on-prem, Qdrant/Milvus.
+- **Server:** готовить под Docker + Nginx/Caddy; см. `docs/engineering/07-server-deployment.md`.
+
+## Запреты
+
+- Реальные денежные переводы без явного confirm (SMS/биометрия в prod; в demo — только draft + кнопка «Подтвердить» без side-effect).
+- Выдуманные нормы НК РФ / законы без RAG-контекста и цитаты.
+- Отправка сырых PII (ФИО, счета, телефоны) в cloud LLM в production-пути — только после NER-маскирования.
+- Jailbreak / советы по уклонению от налогов — блок на входе.
+- Секреты в git (`.env`, ключи).
+
+## Intents (не расширять без обновления docs)
+
+`TAX_CALC` | `LEGAL_REVIEW` | `ONBOARDING` | `GENERAL_QA` | `TRANSACTION`
+
+## Skills
+
+brainstorming → writing-plans → TDD/executing-plans → verification-before-completion; UI polish → deslop.

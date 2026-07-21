@@ -1,0 +1,36 @@
+---
+description: Что можно мокать в демо vs что обязательно в production-спеке
+alwaysApply: true
+---
+
+# Demo vs Production
+
+## Demo (можно)
+
+- **Backend только на Go** (один сервис API+agents). Python runtime в демо не поднимать.
+- Cloud LLM (OpenAI-compatible) через env + `ChatClient` в Go; `DEMO_OFFLINE=1` без ключа.
+- Моки: транзакции, ФНС/ЕНС, 115-ФЗ светофор, создание payment draft.
+- Web PWA (Next.js) вместо React Native; SSE к Go.
+- Seed-персона beauty-мастера.
+- Упрощённый OCR (локальный/мок) вместо Yandex Vision.
+- Деплой на один VPS (Docker Compose + TLS) по `docs/engineering/07-server-deployment.md`.
+
+## Demo (нельзя выдавать за прод)
+
+- Утверждать, что ответы — официальная консультация банка/ФНС.
+- Хранить реальные паспортные/банковские данные пользователей.
+- Обходить confirm на финансовых действиях.
+
+## Production (спека обязана покрывать)
+
+- On-prem LLM (Llama 3 / Qwen 2.5 + Mixtral router), vLLM/TensorRT-LLM.
+- React Native в SuperApp «Альфа-Бизнес» (FAB/Tab).
+- Go router + Python AI + Java core adapters, Kong/Nginx, Kafka.
+- PII NER masking, Llama Guard / anti-jailbreak, strict output parser.
+- Реальные tools: transactions, 115-ФЗ, payment draft, FNS ENP.
+- Совместимость с инфраструктурой и требованиями Альфа-Банка.
+
+## Общее (оба слоя)
+
+Одинаковые имена tools, типы SDUI-компонентов, intent enum, дисклеймеры ИИ.
+Изменение контракта → обновить `docs/architecture/05-api-contracts.md` и `docs/design/04-generative-ui-catalog.md`.

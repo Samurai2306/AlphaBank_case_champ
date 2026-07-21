@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-red: #ef3124;
+  --platinum: #d1d5d8;
+  --ink: #0b1117;
+  --canvas: #f5f5f5;
+  --surface: #ffffff;
+  --pastel-mint: #e8f6ee;
+  --pastel-lavender: #ede7f6;
+  --pastel-peach: #fff0e6;
+  --pastel-rose: #fee1e1;
+  --pastel-cyan: #e3f4f8;
+  --radius-card: 28px;
+  --font-sans: "Alfa Interface Sans", Manrope, system-ui, sans-serif;
+}
+
+html,
+body {
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  color: var(--ink);
+  background: var(--canvas);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+@font-face {
+  font-family: "Alfa Interface Sans";
+  src: url("https://alfabank.servicecdn.ru/media/fonts/alfa-interface-sans_regular.woff2")
+    format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Alfa Interface Sans";
+  src: url("https://alfabank.servicecdn.ru/media/fonts/alfa-interface-sans_medium.woff2")
+    format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Alfa Interface Sans";
+  src: url("https://alfabank.servicecdn.ru/media/fonts/alfa-interface-sans_bold.woff2")
+    format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Horizontal cashback strip (Alpha-style) */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@layer components {
+  /* Contact-ready controls: almost all primary CTAs */
+  .btn-touch,
+  a.rounded-pill,
+  button.rounded-pill,
+  button[type="submit"] {
+    @apply transition-all duration-200 ease-out;
+  }
+
+  a.rounded-pill:hover,
+  button.rounded-pill:hover:not(:disabled),
+  .btn-touch:hover:not(:disabled),
+  button[type="submit"]:hover:not(:disabled) {
+    @apply -translate-y-0.5 shadow-[0_10px_24px_rgba(239,49,36,0.22)];
+    filter: brightness(1.05);
+  }
+
+  a.rounded-pill:active,
+  button.rounded-pill:active:not(:disabled),
+  .btn-touch:active:not(:disabled),
+  button[type="submit"]:active:not(:disabled) {
+    @apply translate-y-0 scale-[0.97] shadow-none;
+    filter: brightness(0.98);
+  }
+
+  a.rounded-pill:focus-visible,
+  button.rounded-pill:focus-visible,
+  .btn-touch:focus-visible,
+  button[type="submit"]:focus-visible {
+    @apply outline-none ring-2 ring-brand/50 ring-offset-2;
+  }
+
+  /* Soft surface cards that act as links */
+  a.rounded-card,
+  .card-touch {
+    @apply transition-all duration-200 ease-out;
+  }
+
+  a.rounded-card:hover,
+  .card-touch:hover {
+    @apply -translate-y-0.5 shadow-[0_14px_36px_rgba(11,17,23,0.1)];
+  }
+
+  a.rounded-card:active,
+  .card-touch:active {
+    @apply translate-y-0 scale-[0.99];
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    a.rounded-pill,
+    button.rounded-pill,
+    .btn-touch,
+    a.rounded-card,
+    .card-touch,
+    .group {
+      transition: none !important;
+    }
+    a.rounded-pill:hover,
+    button.rounded-pill:hover:not(:disabled),
+    a.rounded-card:hover,
+    .card-touch:hover {
+      transform: none;
+    }
+  }
+}

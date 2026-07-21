@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "component": "TaxCard",
+  "props": {
+    "regime": "NPD",
+    "period_label": "Июль 2026",
+    "tax_amount": 7740,
+    "ceiling_amount": 10800,
+    "currency": "RUB",
+    "rate_label": "4.3% смешанная",
+    "income": 180000,
+    "b2c_share": 0.85,
+    "assumptions": [
+      "Доля физлиц по умолчанию 85% (типично для beauty)",
+      "НПД: 4% с физлиц, 6% с юрлицами и ИП (упрощённая демо-модель)"
+    ],
+    "disclaimer": "ИИ-помощник Альфа-Банка. Рекомендации справочные — финальное решение за вами.",
+    "source_ref": "kb:npd-rates-demo#2026",
+    "cta": {
+      "action": "create_payment_draft",
+      "label": "Сформировать платёжку"
+    }
+  }
+}

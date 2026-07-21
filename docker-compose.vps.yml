@@ -1,0 +1,28 @@
+# VPS overlay for bot-project.ru — bind localhost only; reuse BOT host ports.
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.vps.yml up -d --build
+services:
+  api:
+    ports: !override
+      - "127.0.0.1:8100:8080"
+    environment:
+      CORS_ORIGINS: "https://bot-project.ru,https://www.bot-project.ru,https://glebcher23.fvds.ru"
+      DEMO_OFFLINE: ${DEMO_OFFLINE:-0}
+      DEMO_TOKEN: ${DEMO_TOKEN:-demo-masha-token}
+      HTTP_ADDR: ":8080"
+      USE_MEMORY_STORE: "1"
+      # Free OpenAI-compatible endpoint reachable from RU VPS (flaky under load).
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://text.pollinations.ai/openai}
+      LLM_API_KEY: ${LLM_API_KEY:-pollinations}
+      LLM_MODEL: ${LLM_MODEL:-openai-fast}
+
+  web:
+    ports: !override
+      - "127.0.0.1:3100:3000"
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: "https://bot-project.ru/api/v1"
+        NEXT_PUBLIC_DEMO_TOKEN: ${DEMO_TOKEN:-demo-masha-token}
+    environment:
+      NEXT_PUBLIC_API_URL: "https://bot-project.ru/api/v1"
+      NEXT_PUBLIC_DEMO_TOKEN: ${DEMO_TOKEN:-demo-masha-token}
