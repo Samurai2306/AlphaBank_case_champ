@@ -265,8 +265,52 @@ More steps, but BOT stays live until the last switch.
 | 2026-07-19 ~18:13 | agent | HTTPS smoke OK: `/api/v1/health`, UI 200, register→`empty_cabinet=true`, Маша home, SSE chat `TAX_CALC` | n/a (live) |
 | 2026-07-19 ~21:05 | agent | Redeploy: RAG 90 chunks; fix `40к` money parse; realistic unit-econ (НПД tax, 22 days, chart from −fix); smoke `UNIT_ECON` fixed=40000 be=2 | compose rebuild in `/opt/AlphaBank_case_champ` |
 | 2026-07-19 ~21:20 | agent | Softer LLM routing + enrich; PDF extract via ledongthuc + heuristic/CP1251 → markdown for LLM; smoke free-form GENERAL_QA | compose rebuild |
+| 2026-07-31 | agent | LLM: OpenCode Zen + model failover (Pollinations 402/403 from VPS) | compose rebuild api |
+| 2026-08-24 | agent | Docs committed to GitHub (`docs/PROJECT.md`). **Rollback BOT blocked from this machine:** SSH/22 and :443 to `155.212.170.159` time out; `bot-project.ru` A-record now `31.31.196.17` (REG.RU parking `server256.hosting.reg.ru`), not the FVDS VPS. `glebcher23.fvds.ru` still resolves to `155.212.170.159`. | Point A `@`/`www` back to `155.212.170.159`, then §4 |
 
-*(Append a row for every future edit: nginx, systemd, compose, docker down/up, certs.)*
+---
+
+## 10. Restore BOT now (when SSH to FVDS works)
+
+DNS must point at the VPS first. In REG.RU / DNS zone of `bot-project.ru`:
+
+| Type | Name | Value |
+|------|------|--------|
+| A | `@` | `155.212.170.159` |
+| A | `www` | `155.212.170.159` |
+
+Remove or ignore the REG.RU parking A `31.31.196.17`. Wait for TTL.
+
+Then on the VPS:
+
+```bash
+# Stop AlphaBank (keep the tree)
+cd /opt/AlphaBank_case_champ
+docker compose -f docker-compose.yml -f docker-compose.vps.yml down
+systemctl stop alphabank-copilot.service 2>/dev/null || true
+systemctl disable alphabank-copilot.service 2>/dev/null || true
+
+# Restore nginx from the cutover backup
+STAMP=20260719-180638
+cp -a /root/swap-backup-$STAMP/bot-project.ru.conf \
+      /etc/nginx/sites-available/bot-project.ru.conf
+cp -a /root/swap-backup-$STAMP/glebcher23.fvds.ru.conf \
+      /etc/nginx/sites-available/glebcher23.fvds.ru.conf
+nginx -t && systemctl reload nginx
+
+# Start BOT (volumes were kept)
+systemctl enable bot-project.service
+systemctl start bot-project.service
+# fallback:
+# cd /opt/B.O.T.-Project
+# docker compose -f BOT_project/docker-compose.yml --env-file .env up -d
+
+curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3100/
+curl -sS http://127.0.0.1:8100/health || true
+```
+
+Parked copy if `/opt/B.O.T.-Project` is missing: `/opt/B.O.T.-Project-parked-20260719-180638`.
+Archives: `/root/bot-project-*.tar.gz`. Runbook: `/root/BOT_PROJECT_DEPLOY_RUNBOOK.txt`.
 
 ---
 
