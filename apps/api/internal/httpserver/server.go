@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -39,8 +40,11 @@ type Server struct {
 
 func New(cfg config.Config, store *memory.Store, log *slog.Logger) http.Handler {
 	var chatLLM *llm.Client
-	if !cfg.DemoOffline && cfg.LLMAPIKey != "" {
-		chatLLM = llm.New(cfg.LLMBaseURL, cfg.LLMAPIKey, cfg.LLMModel)
+	if !cfg.DemoOffline {
+		if eps := cfg.LLMEndpoints(); len(eps) > 0 {
+			chatLLM = llm.NewWithFailover(eps)
+			log.Info("llm failover ready", "endpoints", len(eps))
+		}
 	}
 	s := &Server{
 		cfg: cfg, store: store, log: log,
@@ -162,12 +166,27 @@ func (s *Server) health(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"status": "ok", "service": "copilot-api"})
 }
 
-func (s *Server) ready(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{
+func (s *Server) ready(w http.ResponseWriter, r *http.Request) {
+	out := map[string]any{
 		"status": "ready", "store": "memory",
 		"offline": s.cfg.DemoOffline, "llm_configured": s.cfg.LLMAPIKey != "",
 		"kb_chunks": rag.Default().Len(),
-	})
+	}
+	if s.orch != nil && s.orch.LLM != nil {
+		st := s.orch.LLM.Status()
+		out["llm"] = st
+		if r.URL.Query().Get("probe") == "1" {
+			ctx, cancel := context.WithTimeout(r.Context(), 40*time.Second)
+			defer cancel()
+			if err := s.orch.LLM.Ping(ctx); err != nil {
+				out["llm_probe"] = map[string]any{"ok": false, "error": err.Error()}
+			} else {
+				out["llm_probe"] = map[string]any{"ok": true}
+				out["llm"] = s.orch.LLM.Status()
+			}
+		}
+	}
+	writeJSON(w, http.StatusOK, out)
 }
 
 func (s *Server) me(w http.ResponseWriter, r *http.Request) {

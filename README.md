@@ -1,85 +1,73 @@
-# AI Business Copilot — Demo MVP
+# Альфа-Бизнес: Старт
 
-Питч-ready демо для кейса Альфа-Банка: **Next.js** + **Go API**, offline agents, Generative UI, персона «Маша».
+Демо для кейса Альфа-Банка: кабинет молодого предпринимателя (beauty / НПД) с чатом, налогом, платёжками и Generative UI.
 
-## Быстрый старт (<15 минут)
+**Стек:** Next.js 15 + один Go API (агенты, RAG, SSE). Python в runtime демо нет.
 
-По умолчанию `DEMO_OFFLINE=1` — LLM-ключ не нужен. Цифры налогов всегда из `internal/calc`.
+Практический гайд: **[docs/PROJECT.md](docs/PROJECT.md)**  
+Вся документация: **[docs/00-README.md](docs/00-README.md)**
 
-### 1. API (Go)
+---
 
-```bash
-cd apps/api
-set DEMO_OFFLINE=1
-go run ./cmd/api
-```
+## Быстрый старт
 
-Health: http://localhost:8080/api/v1/health  
-Token: `demo-masha-token`
-
-### 2. Web
+По умолчанию `DEMO_OFFLINE=1` — LLM-ключ не нужен. Цифры налогов всегда из `apps/api/internal/calc`.
 
 ```bash
-cd apps/web
-npm install
-npm run dev
-```
-
-Открыть: http://localhost:3000
-
-### Сценарий жюри
-
-- http://localhost:3000/demo — 6 промптов по порядку  
-- http://localhost:3000/jury — краткий брифинг для жюри  
-
-Приложение: Home · Операции · Сервисы · Chat · Профиль (+ копилка, алерты, путь).
-
-## Переменные
-
-См. [.env.example](.env.example).
-
-| Режим | Как |
-|-------|-----|
-| Offline (питч) | `DEMO_OFFLINE=1` (default) — fixture/orchestrator |
-| Cloud narrative | `DEMO_OFFLINE=0` + `LLM_API_KEY` — OpenAI-compatible; SDUI/calc без изменений |
-
-## Docker (удобный режим)
-
-```bash
+cp .env.example .env
 docker compose up -d --build
 ```
 
-| Сервис | URL |
-|--------|-----|
-| Web | http://localhost:3000 |
+| Что | URL |
+|-----|-----|
+| Приложение | http://localhost:3000 |
 | API health | http://localhost:8080/api/v1/health |
-| Сценарий | http://localhost:3000/demo |
-| Жюри | http://localhost:3000/jury |
+| Сценарий жюри | http://localhost:3000/demo |
+| Брифинг | http://localhost:3000/jury |
 
-Остановить: `docker compose down`  
-Логи: `docker compose logs -f`
+Токен Маши: `demo-masha-token`.
+
+Без Docker:
+
+```bash
+cd apps/api && set DEMO_OFFLINE=1 && go run ./cmd/api
+cd apps/web && npm install && npm run dev
+```
+
+---
+
+## Что умеет демо
+
+- Налог НПД/УСН, копилка ЕНП, черновик платёжки (без реального списания)
+- Светофор 115-ФЗ по ИНН → платёжка аренды/контрагенту
+- Безубыточность + подсказки СБП/эквайринга
+- Выписка в «Операциях», разбор договора PDF, RAG по НК/банковским материалам
+
+Это **не** официальная консультация банка или ФНС.
+
+---
 
 ## Тесты
 
 ```bash
 cd apps/api && go test ./...
-cd apps/web && npx playwright install chromium && npm run test:e2e
+cd apps/web && npx tsc --noEmit
 ```
 
-E2E ожидает API на `:8080`. Home показывает **10 800 ₽** (запас 6%); в чате TaxCard — **~7 740 ₽** (смешанная НПД 4%/6%).
+E2E: API на `:8080`, затем `cd apps/web && npm run test:e2e`.
 
-Debug API: `powershell -File scripts/debug-demo-session.ps1`
+---
 
-## Deploy (VPS later)
+## LLM (опционально)
 
-Заготовки: [deploy/](deploy/) — `docker-compose.prod.yml`, nginx, scripts.  
+`DEMO_OFFLINE=0` + OpenAI-compatible endpoint. С RU VPS удобен OpenCode Zen с ротацией моделей (`LLM_MODELS`). Второй провайдер — `LLM_FALLBACK_*`. См. `.env.example` и [docs/PROJECT.md](docs/PROJECT.md).
+
+---
+
+## VPS / откат домена
+
+Заготовки: [deploy/](deploy/), overlay `docker-compose.vps.yml`.  
 Runbook: [docs/engineering/07-server-deployment.md](docs/engineering/07-server-deployment.md).  
-Нужны: SSH, домен, `DEMO_TOKEN`, опционально `LLM_API_KEY`. Секреты не коммитить.
+Соседство с прежним **B.O.T.-Project** на `bot-project.ru`: [docs/ops/vps-bot-project-swap-reversible.md](docs/ops/vps-bot-project-swap-reversible.md).
 
-## Документация
-
-Стартовая точка: [docs/00-README.md](docs/00-README.md)
-
-- Backend Go: [docs/architecture/09-demo-backend-go.md](docs/architecture/09-demo-backend-go.md)
-- PRD демо: [docs/product/01-prd-demo-mvp.md](docs/product/01-prd-demo-mvp.md)
-- 3D icons: [docs/design/assets/3d-icons/](docs/design/assets/3d-icons/)
+Секреты в git не коммитить.

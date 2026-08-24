@@ -11,10 +11,19 @@ services:
       DEMO_TOKEN: ${DEMO_TOKEN:-demo-masha-token}
       HTTP_ADDR: ":8080"
       USE_MEMORY_STORE: "1"
-      # Free OpenAI-compatible endpoint reachable from RU VPS (flaky under load).
-      LLM_BASE_URL: ${LLM_BASE_URL:-https://text.pollinations.ai/openai}
-      LLM_API_KEY: ${LLM_API_KEY:-pollinations}
-      LLM_MODEL: ${LLM_MODEL:-openai-fast}
+      # Primary: OpenCode Zen free tier (RU-reachable, OpenAI-compatible).
+      # Model rotation + optional fallback keep answers alive when one upstream flaps.
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://opencode.ai/zen/v1}
+      LLM_API_KEY: ${LLM_API_KEY:-public}
+      LLM_PROVIDER: ${LLM_PROVIDER:-opencode-zen}
+      LLM_MODEL: ${LLM_MODEL:-deepseek-v4-flash-free}
+      LLM_MODELS: ${LLM_MODELS:-deepseek-v4-flash-free,qwen3.6-plus-free,minimax-m2.5-free}
+      # Optional second provider (DeepSeek paid/free trial or Pollinations sk_ key).
+      LLM_FALLBACK_BASE_URL: ${LLM_FALLBACK_BASE_URL:-}
+      LLM_FALLBACK_API_KEY: ${LLM_FALLBACK_API_KEY:-}
+      LLM_FALLBACK_MODEL: ${LLM_FALLBACK_MODEL:-}
+      LLM_FALLBACK_PROVIDER: ${LLM_FALLBACK_PROVIDER:-}
+      LLM_FALLBACK_MODELS: ${LLM_FALLBACK_MODELS:-}
 
   web:
     ports: !override

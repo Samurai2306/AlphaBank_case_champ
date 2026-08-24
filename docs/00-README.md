@@ -1,6 +1,8 @@
-# Документация AI Business Copilot
+# Документация — Альфа-Бизнес: Старт
 
 Навигация по Single Source of Truth для стратегии, ТЗ, архитектуры, дизайна и разработки.
+
+**С чего начать разработчику / оператору:** [PROJECT.md](PROJECT.md) (запуск, сценарии, LLM, тесты, VPS).
 
 ## Как читать
 
@@ -28,6 +30,7 @@
 
 | Файл | Содержание |
 |------|------------|
+| [PROJECT.md](PROJECT.md) | **Рабочая дока демо: запуск, сценарии, LLM, деплой** |
 | [product/01-prd-demo-mvp.md](product/01-prd-demo-mvp.md) | ТЗ демо (приоритет кода) |
 | [product/02-prd-production.md](product/02-prd-production.md) | ТЗ production |
 | [product/03-user-stories-acceptance.md](product/03-user-stories-acceptance.md) | User stories + AC |
@@ -73,6 +76,7 @@
 | [engineering/05-testing-strategy.md](engineering/05-testing-strategy.md) | Тесты |
 | [engineering/06-definition-of-done.md](engineering/06-definition-of-done.md) | DoD |
 | [engineering/07-server-deployment.md](engineering/07-server-deployment.md) | **VPS / DNS / TLS — runbook** |
+| [ops/vps-bot-project-swap-reversible.md](ops/vps-bot-project-swap-reversible.md) | Обмен с B.O.T.-Project на `bot-project.ru` и откат |
 
 ### Superpowers & research
 
