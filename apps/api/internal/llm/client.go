@@ -42,7 +42,7 @@ type Client struct {
 
 func New(baseURL, apiKey, model string) *Client {
 	c := &Client{
-		HTTP:      &http.Client{Timeout: 55 * time.Second},
+		HTTP:      &http.Client{Timeout: 22 * time.Second},
 		UserAgent: defaultUserAgent,
 		failUntil: map[string]time.Time{},
 	}
@@ -142,12 +142,14 @@ type chatRequest struct {
 	Messages    []message `json:"messages"`
 	Temperature float64   `json:"temperature"`
 	MaxTokens   int       `json:"max_tokens,omitempty"`
+	Stream      bool      `json:"stream"`
 }
 
 type chatResponse struct {
 	Choices []struct {
 		Message struct {
-			Content string `json:"content"`
+			Content          string `json:"content"`
+			ReasoningContent string `json:"reasoning_content"`
 		} `json:"message"`
 	} `json:"choices"`
 }
@@ -159,6 +161,18 @@ func (c *Client) Complete(ctx context.Context, system, user string) (string, err
 
 // CompleteTemp allows controlling creativity (router uses low temp; narrative uses higher).
 func (c *Client) CompleteTemp(ctx context.Context, system, user string, temperature float64) (string, error) {
+	return c.complete(ctx, system, user, temperature, 1200)
+}
+
+// CompleteBudget is CompleteTemp with a token cap (intent router, pings).
+func (c *Client) CompleteBudget(ctx context.Context, system, user string, temperature float64, maxTokens int) (string, error) {
+	if maxTokens < 32 {
+		maxTokens = 256
+	}
+	return c.complete(ctx, system, user, temperature, maxTokens)
+}
+
+func (c *Client) complete(ctx context.Context, system, user string, temperature float64, maxTokens int) (string, error) {
 	if c == nil || !c.Configured() {
 		return "", fmt.Errorf("llm client not configured")
 	}
@@ -171,7 +185,7 @@ func (c *Client) CompleteTemp(ctx context.Context, system, user string, temperat
 	}
 	var last error
 	for _, ep := range eps {
-		text, err := c.call(ctx, ep, system, user, temperature)
+		text, err := c.call(ctx, ep, system, user, temperature, maxTokens)
 		if err == nil && strings.TrimSpace(text) != "" {
 			c.markOK(ep.Name)
 			return strings.TrimSpace(text), nil
@@ -195,7 +209,7 @@ func (c *Client) Ping(ctx context.Context) error {
 	if c == nil || !c.Configured() {
 		return fmt.Errorf("llm client not configured")
 	}
-	_, err := c.CompleteTemp(ctx, "Reply with exactly: ok", "ping", 0)
+	_, err := c.CompleteBudget(ctx, "Reply with exactly: ok", "ping", 0, 16)
 	return err
 }
 
@@ -230,12 +244,15 @@ func (c *Client) markFail(name string, err error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	// Skip flaky provider for a short cooldown so the next call can fail over.
-	c.failUntil[name] = time.Now().Add(45 * time.Second)
+	c.failUntil[name] = time.Now().Add(25 * time.Second)
 	c.lastErr = fmt.Sprintf("%s: %v", name, err)
 	c.lastCheck = time.Now()
 }
 
-func (c *Client) call(ctx context.Context, ep Endpoint, system, user string, temperature float64) (string, error) {
+func (c *Client) call(ctx context.Context, ep Endpoint, system, user string, temperature float64, maxTokens int) (string, error) {
+	if maxTokens <= 0 {
+		maxTokens = 1200
+	}
 	body, _ := json.Marshal(chatRequest{
 		Model: ep.Model,
 		Messages: []message{
@@ -243,7 +260,8 @@ func (c *Client) call(ctx context.Context, ep Endpoint, system, user string, tem
 			{Role: "user", Content: user},
 		},
 		Temperature: temperature,
-		MaxTokens:   1400,
+		MaxTokens:   maxTokens,
+		Stream:      false,
 	})
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, ep.BaseURL+"/chat/completions", bytes.NewReader(body))
 	if err != nil {
@@ -288,7 +306,15 @@ func (c *Client) call(ctx context.Context, ep Endpoint, system, user string, tem
 	if len(out.Choices) == 0 {
 		return "", fmt.Errorf("empty llm response")
 	}
-	return strings.TrimSpace(out.Choices[0].Message.Content), nil
+	msg := out.Choices[0].Message
+	text := strings.TrimSpace(msg.Content)
+	if text == "" {
+		text = strings.TrimSpace(msg.ReasoningContent)
+	}
+	if text == "" {
+		return "", fmt.Errorf("empty llm response")
+	}
+	return text, nil
 }
 
 func truncate(s string, n int) string {

@@ -38,3 +38,6 @@ Thumbs.db
 postgres-data/
 redis-data/
 uploads/
+.vercel/
+.vercel
+.env*

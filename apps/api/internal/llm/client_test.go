@@ -98,3 +98,27 @@ func TestOpenCodeZenHeaders(t *testing.T) {
 		t.Fatalf("headers auth=%q ua=%q client=%q", gotAuth, gotUA, gotClient)
 	}
 }
+
+func TestUsesReasoningContentWhenMessageEmpty(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/chat/completions", func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"choices": []map[string]any{
+				{"message": map[string]any{"content": "", "reasoning_content": "ok-from-reasoning"}},
+			},
+		})
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	c := NewWithFailover([]Endpoint{{
+		Name: "zen", BaseURL: srv.URL + "/v1", APIKey: "public", Model: "big-pickle", Provider: "opencode-zen",
+	}})
+	c.HTTP = &http.Client{Timeout: 5 * time.Second}
+	text, err := c.CompleteTemp(context.Background(), "sys", "user", 0.1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if text != "ok-from-reasoning" {
+		t.Fatalf("text=%q", text)
+	}
+}

@@ -17,6 +17,7 @@ type Config struct {
 	LLMBaseURL  string
 	LLMAPIKey   string
 	LLMModel    string
+	LLMProvider string
 	UploadDir   string
 	DemoOffline bool
 	LogLevel    string
@@ -24,35 +25,117 @@ type Config struct {
 }
 
 func Load() Config {
-	offline := envBool("DEMO_OFFLINE", true)
 	db := env("DATABASE_URL", "")
 	key := env("LLM_API_KEY", "")
+	base := env("LLM_BASE_URL", "")
+	provider := env("LLM_PROVIDER", "")
+	model := env("LLM_MODEL", "")
+	vercel := os.Getenv("VERCEL") != ""
+
+	// Hosted demo (Vercel): turn on free OpenCode Zen unless DEMO_OFFLINE=1.
+	if vercel && !envIsTrue("DEMO_OFFLINE") {
+		if key == "" {
+			key = "public"
+		}
+		if base == "" || base == "https://api.openai.com/v1" {
+			base = "https://opencode.ai/zen/v1"
+		}
+		if provider == "" {
+			provider = "opencode-zen"
+		}
+		if model == "" || model == "gpt-4o-mini" || model == "deepseek-v4-flash-free" {
+			model = "big-pickle"
+		}
+	}
+	if provider == "" && strings.Contains(strings.ToLower(base), "opencode.ai/zen") {
+		provider = "opencode-zen"
+	}
+	if key == "" && provider == "opencode-zen" {
+		key = "public"
+	}
+	if base == "" {
+		base = "https://api.openai.com/v1"
+	}
+	if model == "" {
+		model = "gpt-4o-mini"
+	}
+
+	offlineDefault := true
+	if vercel && key != "" {
+		offlineDefault = false
+	}
+	offline := envBool("DEMO_OFFLINE", offlineDefault)
+	if key == "" {
+		offline = true
+	}
+
 	return Config{
-		HTTPAddr:    env("HTTP_ADDR", ":8080"),
+		HTTPAddr:    httpAddr(),
 		DatabaseURL: db,
 		RedisURL:    env("REDIS_URL", ""),
 		DemoToken:   env("DEMO_TOKEN", "demo-masha-token"),
 		CORSOrigins: splitCSV(env("CORS_ORIGINS", "http://localhost:3000")),
-		LLMBaseURL:  env("LLM_BASE_URL", "https://api.openai.com/v1"),
+		LLMBaseURL:  base,
 		LLMAPIKey:   key,
-		LLMModel:    env("LLM_MODEL", "gpt-4o-mini"),
-		UploadDir:   env("UPLOAD_DIR", "./data/uploads"),
-		DemoOffline: offline || key == "",
+		LLMModel:    model,
+		LLMProvider: provider,
+		UploadDir:   uploadDir(),
+		DemoOffline: offline,
 		LogLevel:    env("LOG_LEVEL", "info"),
 		UseMemory:   envBool("USE_MEMORY_STORE", true) || db == "",
 	}
 }
 
+// httpAddr prefers HTTP_ADDR, then PORT (Vercel/Railway/Render), then :8080.
+func httpAddr() string {
+	if v := os.Getenv("HTTP_ADDR"); v != "" {
+		return v
+	}
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	if strings.HasPrefix(port, ":") {
+		return port
+	}
+	return ":" + port
+}
+
+func uploadDir() string {
+	if v := os.Getenv("UPLOAD_DIR"); v != "" {
+		return v
+	}
+	if os.Getenv("VERCEL") != "" {
+		return "/tmp/uploads"
+	}
+	return "./data/uploads"
+}
+
 // LLMEndpoints builds the failover chain: primary model(s) + optional second provider.
 func (c Config) LLMEndpoints() []llm.Endpoint {
-	if c.LLMAPIKey == "" || c.LLMBaseURL == "" {
+	key := c.LLMAPIKey
+	base := c.LLMBaseURL
+	provider := c.LLMProvider
+	if provider == "" {
+		provider = env("LLM_PROVIDER", "")
+	}
+	if provider == "" && strings.Contains(strings.ToLower(base), "opencode.ai/zen") {
+		provider = "opencode-zen"
+	}
+	if key == "" && provider == "opencode-zen" {
+		key = "public"
+	}
+	if key == "" || base == "" {
 		return nil
 	}
 	models := splitCSV(env("LLM_MODELS", ""))
 	if len(models) == 0 {
-		models = []string{c.LLMModel}
+		if provider == "opencode-zen" {
+			models = []string{"big-pickle", "mimo-v2.5-free", "nemotron-3.5-lightning-free", "ling-3.0-flash-fin-free"}
+		} else {
+			models = []string{c.LLMModel}
+		}
 	}
-	provider := env("LLM_PROVIDER", "")
 	var out []llm.Endpoint
 	for i, m := range models {
 		name := "primary"
@@ -60,7 +143,7 @@ func (c Config) LLMEndpoints() []llm.Endpoint {
 			name = "primary-" + sanitizeName(m)
 		}
 		out = append(out, llm.Endpoint{
-			Name: name, BaseURL: c.LLMBaseURL, APIKey: c.LLMAPIKey, Model: m, Provider: provider,
+			Name: name, BaseURL: base, APIKey: key, Model: m, Provider: provider,
 		})
 	}
 	// Optional second provider (Pollinations / DeepSeek / etc.).
@@ -114,6 +197,18 @@ func envBool(k string, def bool) bool {
 	b, err := strconv.ParseBool(v)
 	if err != nil {
 		return def
+	}
+	return b
+}
+
+func envIsTrue(k string) bool {
+	v := strings.TrimSpace(os.Getenv(k))
+	if v == "" {
+		return false
+	}
+	b, err := strconv.ParseBool(v)
+	if err != nil {
+		return false
 	}
 	return b
 }

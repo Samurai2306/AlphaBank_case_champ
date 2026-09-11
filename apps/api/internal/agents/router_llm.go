@@ -27,13 +27,17 @@ func (o *Orchestrator) resolveIntent(ctx context.Context, msg, lower string, his
 		return kw
 	}
 
-	intent, conf := o.classifyLLM(ctx, msg, history)
-	if !validIntents[intent] {
+	// Hard override only for ultra-explicit pitch commands.
+	if explicitCommand(lower) {
+		return kw
+	}
+	// Jury/demo phrasing is already unambiguous — skip an extra LLM hop.
+	if kw != "GENERAL_QA" && keywordConfident(lower, kw) {
 		return kw
 	}
 
-	// Hard override only for ultra-explicit pitch commands.
-	if explicitCommand(lower) {
+	intent, conf := o.classifyLLM(ctx, msg, history)
+	if !validIntents[intent] {
 		return kw
 	}
 
@@ -51,6 +55,25 @@ func (o *Orchestrator) resolveIntent(ctx context.Context, msg, lower string, his
 		return kw
 	}
 	return "GENERAL_QA"
+}
+
+func keywordConfident(lower, kw string) bool {
+	switch kw {
+	case "TAX_CALC":
+		return containsAny(lower, "сколько отложить", "налог за этот месяц", "налог за месяц", "посчитай налог")
+	case "TRANSACTION":
+		return containsAny(lower, "сформируй плат")
+	case "PIGGY":
+		return containsAny(lower, "включи копил", "выключи копил")
+	case "COMPLIANCE":
+		return containsAny(lower, "проверь инн")
+	case "UNIT_ECON":
+		return containsAny(lower, "клиентов в день", "безубыточ")
+	case "LEGAL_REVIEW":
+		return containsAny(lower, "разбери договор")
+	default:
+		return false
+	}
 }
 
 func explicitCommand(lower string) bool {
@@ -92,7 +115,7 @@ func (o *Orchestrator) classifyLLM(ctx context.Context, msg string, history []st
 	}
 	b.WriteString("User message:\n")
 	b.WriteString(msg)
-	raw, err := o.LLM.CompleteTemp(ctx, system, b.String(), 0.2)
+	raw, err := o.LLM.CompleteBudget(ctx, system, b.String(), 0.2, 220)
 	if err != nil || raw == "" {
 		return "", 0
 	}

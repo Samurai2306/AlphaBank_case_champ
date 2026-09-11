@@ -100,7 +100,7 @@ npm run dev
 
 Проверка: `GET /api/v1/ready` и `GET /api/v1/ready?probe=1`.
 
-Рабочий контур с RU VPS (на момент выкладки): OpenCode Zen, модели `deepseek-v4-flash-free` → `qwen3.6-plus-free` → `minimax-m2.5-free`. Pollinations с VPS часто отдаёт 402/403 — не полагаться как на единственный канал.
+Рабочий контур: OpenCode Zen, модели `big-pickle` → `mimo-v2.5-free` → `nemotron-3.5-lightning-free` → `ling-3.0-flash-fin-free`. На Vercel этот контур включается сам (`DEMO_OFFLINE=0`), локально по умолчанию офлайн. Старые id (`deepseek-v4-flash-free`, `minimax-m2.5-free`) больше не принимаются Zen.
 
 ---
 

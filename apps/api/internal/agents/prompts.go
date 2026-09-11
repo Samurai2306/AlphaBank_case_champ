@@ -75,7 +75,7 @@ func (o *Orchestrator) enrichFacts(ctx context.Context, userMsg, intent string, 
 		return events
 	}
 	// Accept enrichment if it's at least as useful (not drastically shorter).
-	if len([]rune(text)) < len([]rune(facts))*2/3 {
+	if len([]rune(text)) < len([]rune(facts))/2 {
 		return events
 	}
 

@@ -38,6 +38,28 @@ type Server struct {
 	log    *slog.Logger
 }
 
+func allowCORSOrigin(configured []string) func(*http.Request, string) bool {
+	return func(_ *http.Request, origin string) bool {
+		if origin == "" {
+			return false
+		}
+		for _, o := range configured {
+			if o == "*" || o == origin {
+				return true
+			}
+		}
+		u, err := url.Parse(origin)
+		if err != nil {
+			return false
+		}
+		host := strings.ToLower(u.Hostname())
+		if host == "localhost" || host == "127.0.0.1" {
+			return true
+		}
+		return strings.HasSuffix(host, ".vercel.app")
+	}
+}
+
 func New(cfg config.Config, store *memory.Store, log *slog.Logger) http.Handler {
 	var chatLLM *llm.Client
 	if !cfg.DemoOffline {
@@ -56,6 +78,7 @@ func New(cfg config.Config, store *memory.Store, log *slog.Logger) http.Handler 
 	r.Use(chimw.Recoverer)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   cfg.CORSOrigins,
+		AllowOriginFunc:  allowCORSOrigin(cfg.CORSOrigins),
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
@@ -437,11 +460,7 @@ func (s *Server) chat(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, "VALIDATION_ERROR", "message required")
 		return
 	}
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		writeErr(w, 500, "STREAM_UNSUPPORTED", "streaming unsupported")
-		return
-	}
+	flusher, _ := w.(http.Flusher)
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
@@ -450,7 +469,9 @@ func (s *Server) chat(w http.ResponseWriter, r *http.Request) {
 	for _, ev := range events {
 		payload, _ := json.Marshal(ev.Data)
 		fmt.Fprintf(w, "event: %s\ndata: %s\n\n", ev.Event, payload)
-		flusher.Flush()
+		if flusher != nil {
+			flusher.Flush()
+		}
 		time.Sleep(12 * time.Millisecond)
 	}
 }

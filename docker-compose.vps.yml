@@ -16,8 +16,8 @@ services:
       LLM_BASE_URL: ${LLM_BASE_URL:-https://opencode.ai/zen/v1}
       LLM_API_KEY: ${LLM_API_KEY:-public}
       LLM_PROVIDER: ${LLM_PROVIDER:-opencode-zen}
-      LLM_MODEL: ${LLM_MODEL:-deepseek-v4-flash-free}
-      LLM_MODELS: ${LLM_MODELS:-deepseek-v4-flash-free,qwen3.6-plus-free,minimax-m2.5-free}
+      LLM_MODEL: ${LLM_MODEL:-big-pickle}
+      LLM_MODELS: ${LLM_MODELS:-big-pickle,mimo-v2.5-free,nemotron-3.5-lightning-free,ling-3.0-flash-fin-free}
       # Optional second provider (DeepSeek paid/free trial or Pollinations sk_ key).
       LLM_FALLBACK_BASE_URL: ${LLM_FALLBACK_BASE_URL:-}
       LLM_FALLBACK_API_KEY: ${LLM_FALLBACK_API_KEY:-}
