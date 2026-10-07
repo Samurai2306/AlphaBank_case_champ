@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -75,9 +76,14 @@ func (c *Client) SetEndpoints(eps []Endpoint) {
 			e.Provider = detectProvider(e.BaseURL)
 		}
 		if e.APIKey == "" {
-			if e.Provider == "opencode-zen" {
+			switch e.Provider {
+			case "opencode-zen":
 				e.APIKey = "public"
-			} else {
+			case "vercel-ai-gateway":
+				e.APIKey = "oidc"
+			case "pollinations":
+				e.APIKey = "anonymous"
+			default:
 				continue
 			}
 		}
@@ -243,8 +249,24 @@ func (c *Client) markOK(name string) {
 func (c *Client) markFail(name string, err error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	// Skip flaky provider for a short cooldown so the next call can fail over.
-	c.failUntil[name] = time.Now().Add(25 * time.Second)
+	cool := 25 * time.Second
+	msg := err.Error()
+	if strings.Contains(msg, "FreeTierError") || strings.Contains(msg, "customer_verification_required") ||
+		strings.Contains(msg, "not supported") {
+		cool = 10 * time.Minute
+		for _, e := range c.eps {
+			if e.Name == name {
+				for _, sib := range c.eps {
+					if sib.Provider == e.Provider {
+						c.failUntil[sib.Name] = time.Now().Add(cool)
+					}
+				}
+				break
+			}
+		}
+	} else {
+		c.failUntil[name] = time.Now().Add(cool)
+	}
 	c.lastErr = fmt.Sprintf("%s: %v", name, err)
 	c.lastCheck = time.Now()
 }
@@ -270,6 +292,23 @@ func (c *Client) call(ctx context.Context, ep Endpoint, system, user string, tem
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	switch ep.Provider {
+	case "vercel-ai-gateway":
+		key := strings.TrimSpace(os.Getenv("AI_GATEWAY_API_KEY"))
+		if key == "" {
+			key = strings.TrimSpace(os.Getenv("VERCEL_OIDC_TOKEN"))
+		}
+		if key == "" {
+			key = ep.APIKey
+		}
+		if key == "" || key == "oidc" {
+			return "", fmt.Errorf("vercel ai gateway: no token")
+		}
+		req.Header.Set("Authorization", "Bearer "+key)
+		ua := c.UserAgent
+		if ua == "" {
+			ua = defaultUserAgent
+		}
+		req.Header.Set("User-Agent", ua)
 	case "opencode-zen":
 		// Free OpenCode Zen tier: public bearer + session headers (OpenAI-compatible).
 		key := ep.APIKey

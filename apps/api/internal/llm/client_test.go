@@ -99,6 +99,20 @@ func TestOpenCodeZenHeaders(t *testing.T) {
 	}
 }
 
+func TestGatewayRequiresToken(t *testing.T) {
+	c := NewWithFailover([]Endpoint{{
+		Name: "gw", BaseURL: "https://example.invalid/v1",
+		Model: "google/gemini-2.5-flash-lite", Provider: "vercel-ai-gateway",
+	}})
+	c.HTTP = &http.Client{Timeout: time.Second}
+	t.Setenv("AI_GATEWAY_API_KEY", "")
+	t.Setenv("VERCEL_OIDC_TOKEN", "")
+	_, err := c.CompleteTemp(context.Background(), "sys", "user", 0.1)
+	if err == nil || !strings.Contains(err.Error(), "no token") {
+		t.Fatalf("err=%v", err)
+	}
+}
+
 func TestUsesReasoningContentWhenMessageEmpty(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/chat/completions", func(w http.ResponseWriter, r *http.Request) {

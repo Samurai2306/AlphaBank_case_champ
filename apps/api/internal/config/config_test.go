@@ -44,7 +44,10 @@ func TestVercelEnablesZenLLM(t *testing.T) {
 	}
 	eps := cfg.LLMEndpoints()
 	if len(eps) < 3 {
-		t.Fatalf("want zen model failover, got %d", len(eps))
+		t.Fatalf("want gateway+zen failover, got %d", len(eps))
+	}
+	if eps[0].Provider != "pollinations" {
+		t.Fatalf("first endpoint should be Pollinations, got %q", eps[0].Provider)
 	}
 }
 

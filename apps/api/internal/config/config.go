@@ -61,11 +61,11 @@ func Load() Config {
 	}
 
 	offlineDefault := true
-	if vercel && key != "" {
+	if vercel && (key != "" || gatewayLikely()) {
 		offlineDefault = false
 	}
 	offline := envBool("DEMO_OFFLINE", offlineDefault)
-	if key == "" {
+	if key == "" && !gatewayLikely() {
 		offline = true
 	}
 
@@ -113,6 +113,40 @@ func uploadDir() string {
 
 // LLMEndpoints builds the failover chain: primary model(s) + optional second provider.
 func (c Config) LLMEndpoints() []llm.Endpoint {
+	var out []llm.Endpoint
+	if !envIsTrue("LLM_DISABLE_POLLINATIONS") {
+		polModels := splitCSV(env("POLLINATIONS_MODELS", ""))
+		if len(polModels) == 0 {
+			polModels = []string{"openai", "openai-fast"}
+		}
+		for i, m := range polModels {
+			name := "pollinations"
+			if i > 0 {
+				name = "pollinations-" + sanitizeName(m)
+			}
+			out = append(out, llm.Endpoint{
+				Name: name, BaseURL: "https://text.pollinations.ai/v1",
+				APIKey: "anonymous", Model: m, Provider: "pollinations",
+			})
+		}
+	}
+	if gatewayLikely() {
+		gwModels := splitCSV(env("AI_GATEWAY_MODELS", ""))
+		if len(gwModels) == 0 {
+			gwModels = []string{"google/gemini-2.5-flash-lite", "openai/gpt-5-nano", "google/gemini-2.5-flash"}
+		}
+		for i, m := range gwModels {
+			name := "gateway"
+			if i > 0 {
+				name = "gateway-" + sanitizeName(m)
+			}
+			out = append(out, llm.Endpoint{
+				Name: name, BaseURL: "https://ai-gateway.vercel.sh/v1",
+				APIKey: gatewayKeyPlaceholder(), Model: m, Provider: "vercel-ai-gateway",
+			})
+		}
+	}
+
 	key := c.LLMAPIKey
 	base := c.LLMBaseURL
 	provider := c.LLMProvider
@@ -125,26 +159,24 @@ func (c Config) LLMEndpoints() []llm.Endpoint {
 	if key == "" && provider == "opencode-zen" {
 		key = "public"
 	}
-	if key == "" || base == "" {
-		return nil
-	}
-	models := splitCSV(env("LLM_MODELS", ""))
-	if len(models) == 0 {
-		if provider == "opencode-zen" {
-			models = []string{"big-pickle", "mimo-v2.5-free", "nemotron-3.5-lightning-free", "ling-3.0-flash-fin-free"}
-		} else {
-			models = []string{c.LLMModel}
+	if key != "" && base != "" {
+		models := splitCSV(env("LLM_MODELS", ""))
+		if len(models) == 0 {
+			if provider == "opencode-zen" {
+				models = []string{"big-pickle", "mimo-v2.5-free", "nemotron-3.5-lightning-free", "ling-3.0-flash-fin-free"}
+			} else {
+				models = []string{c.LLMModel}
+			}
 		}
-	}
-	var out []llm.Endpoint
-	for i, m := range models {
-		name := "primary"
-		if i > 0 {
-			name = "primary-" + sanitizeName(m)
+		for i, m := range models {
+			name := "primary"
+			if i > 0 {
+				name = "primary-" + sanitizeName(m)
+			}
+			out = append(out, llm.Endpoint{
+				Name: name, BaseURL: base, APIKey: key, Model: m, Provider: provider,
+			})
 		}
-		out = append(out, llm.Endpoint{
-			Name: name, BaseURL: base, APIKey: key, Model: m, Provider: provider,
-		})
 	}
 	// Optional second provider (Pollinations / DeepSeek / etc.).
 	fbURL := env("LLM_FALLBACK_BASE_URL", "")
@@ -180,6 +212,22 @@ func sanitizeName(s string) string {
 		return s[:32]
 	}
 	return s
+}
+
+func gatewayLikely() bool {
+	return os.Getenv("VERCEL") != "" ||
+		os.Getenv("AI_GATEWAY_API_KEY") != "" ||
+		os.Getenv("VERCEL_OIDC_TOKEN") != ""
+}
+
+func gatewayKeyPlaceholder() string {
+	if v := os.Getenv("AI_GATEWAY_API_KEY"); v != "" {
+		return v
+	}
+	if v := os.Getenv("VERCEL_OIDC_TOKEN"); v != "" {
+		return v
+	}
+	return "oidc"
 }
 
 func env(k, def string) string {
