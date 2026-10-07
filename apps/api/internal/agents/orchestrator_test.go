@@ -30,3 +30,13 @@ func TestGuardrail(t *testing.T) {
 	}
 	t.Fatal("expected guardrail error")
 }
+
+func TestOnboardingKeywordStaysConfident(t *testing.T) {
+	msg := "привет! я делаю маникюр на дому в казани, где-то 180 тысяч в месяц, пока без ип."
+	if route(msg) != "ONBOARDING" {
+		t.Fatalf("route=%s", route(msg))
+	}
+	if !keywordConfident(msg, "ONBOARDING") {
+		t.Fatal("jury onboarding line must skip LLM reclassify")
+	}
+}

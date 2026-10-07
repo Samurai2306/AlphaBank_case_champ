@@ -71,6 +71,8 @@ func keywordConfident(lower, kw string) bool {
 		return containsAny(lower, "клиентов в день", "безубыточ")
 	case "LEGAL_REVIEW":
 		return containsAny(lower, "разбери договор")
+	case "ONBOARDING":
+		return containsAny(lower, "маникюр", "без ип", "начинаю бизнес", "открыть бизнес", "зовут")
 	default:
 		return false
 	}
