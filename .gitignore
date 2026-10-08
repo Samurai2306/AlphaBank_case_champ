@@ -4,10 +4,11 @@
 !.env.example
 apps/web/.env.local
 
-# Go / uploads
+# Go / uploads. The bare name data/ also hid apps/api/internal/rag/data,
+# which go:embed needs at build time (Vercel git deploys ship only git files).
 apps/api/bin/
 apps/api/data/
-data/
+/data/
 
 # Dependencies / build
 node_modules/
