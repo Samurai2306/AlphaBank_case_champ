@@ -30,6 +30,6 @@
 - `scripts/debug-demo-session.ps1` for API smoke.
 
 ## Remaining (honest, not blockers for pitch)
-- True Postgres/Redis adapters still optional stubs.
+- Сессия и корпус живут в памяти процесса.
 - Cloud LLM is narrative polish, not token-streaming upstream.
 - Legal scan is fixture/heuristic, not NLP extraction of full PDF text.

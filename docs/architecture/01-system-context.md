@@ -42,7 +42,7 @@ flowchart TB
 | Core banking | Mocks | Java adapters |
 | ФНС | Mock ENP | СМЭВ |
 | Госключ | — | Подписание |
-| Vector KB | pgvector | Qdrant/Milvus |
+| Vector KB | лексический индекс в процессе | Qdrant/Milvus |
 | Events | — | Kafka |
 
 ## Границы системы

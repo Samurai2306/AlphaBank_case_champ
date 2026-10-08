@@ -18,16 +18,14 @@ flowchart TB
   Web[Nextjs_web]
   Nginx[Nginx_or_Caddy]
   API[Go_copilot_api]
-  PG[(Postgres_pgvector)]
-  Redis[(Redis)]
-  LLM[OpenAI_Anthropic_compatible]
+  Mem[MemoryStore_and_lexical_KB]
+  LLM[OpenAI_compatible]
   Disk[Uploads_volume]
 
   Web --> Nginx
   Nginx --> API
   Nginx --> Web
-  API --> PG
-  API --> Redis
+  API --> Mem
   API --> LLM
   API --> Disk
 ```
@@ -46,11 +44,8 @@ apps/api/                          # Go module: github.com/.../copilot-api
 │   ├── domain/                    # User, Profile, Draft, TaxResult…
 │   ├── ports/                     # interfaces: Banking, FNS, LLM, Embedder, Store
 │   ├── adapters/
-│   │   ├── postgres/              # pgxpool, queries, migrations runner
-│   │   ├── redisx/                # rate limit, session
-│   │   ├── llm/                   # OpenAI-compatible client
-│   │   ├── mockbank/              # transactions, 115-fz, payment draft
-│   │   └── mockfns/               # ENP balance
+│   │   ├── memory/                # session, drafts, seed persona
+│   │   └── mockbank/              # transactions, 115-fz, payment draft
 │   ├── tools/                     # tool registry + handlers (same names as docs)
 │   ├── agents/
 │   │   ├── router.go
@@ -59,7 +54,7 @@ apps/api/                          # Go module: github.com/.../copilot-api
 │   │   ├── cfo.go
 │   │   ├── onboarding.go
 │   │   └── guard.go
-│   ├── rag/                       # chunk retrieve (pgvector)
+│   ├── rag/                       # lexical retrieve, embedded JSONL
 │   ├── calc/                      # pure tax + unit economics (no I/O) — TDD
 │   ├── httpserver/
 │   │   ├── router.go              # chi
@@ -68,9 +63,6 @@ apps/api/                          # Go module: github.com/.../copilot-api
 │   │   ├── rest.go                # me, transactions, drafts, documents
 │   │   └── health.go
 │   └── sdui/                      # build SDUI envelopes
-├── migrations/                    # goose SQL
-├── prompts/                       # *.txt system prompts
-├── testdata/                      # golden dialogs, offline fixtures
 ├── Dockerfile
 └── go.mod
 ```
@@ -88,7 +80,7 @@ apps/api/                          # Go module: github.com/.../copilot-api
 | Method | Path | Handler |
 |--------|------|---------|
 | GET | `/api/v1/health` | liveness |
-| GET | `/api/v1/ready` | db+redis ping |
+| GET | `/api/v1/ready` | memory store + corpus size |
 | POST | `/api/v1/chat` | SSE chat |
 | GET | `/api/v1/me` | profile |
 | PATCH | `/api/v1/me/onboarding` | onboarding |
@@ -219,20 +211,19 @@ DEMO_OFFLINE=0
 
 ## RAG (demo)
 
-- Таблица `kb_chunks (id, source, text, embedding vector, version)`.  
-- Embeddings через тот же compatible API или локальный mock hash-embed для offline.  
-- Retrieve top-k cosine через pgvector.  
-- Tax answers: prefer `calc` + optional citation chunk.
+- Корпус — `internal/rag/data/*.jsonl`, вшит в бинарь (`go:embed`).
+- Поиск — лексический рейтинг в памяти процесса, без эмбеддингов.
+- Суммы налога всегда из `internal/calc`. Фрагмент корпуса только цитата рядом.
 
 ## Persistence
 
 | Store | Use |
 |-------|-----|
-| Postgres 16 + pgvector | users, chat, txns, drafts, kb |
-| Redis | rate limit (chat/min), optional session |
+| Память процесса | users, chat, txns, drafts |
+| Бинарь | корпус знаний |
 | Volume `/data/uploads` | PDF legal |
 
-Migrations: **goose** (или golang-migrate), файлы в `migrations/`.
+Отдельной базы и Redis в демо нет. Сид Маши создаётся при старте API.
 
 ## Observability
 
@@ -243,7 +234,6 @@ Migrations: **goose** (или golang-migrate), файлы в `migrations/`.
 
 ## Security (demo, но «по-взрослому»)
 
-- Rate limit Redis: например 30 chat req / 10 min / IP+user.  
 - Max upload 10MB; MIME allow `application/pdf`.  
 - Path traversal safe filenames (uuid).  
 - Guardrail keywords + LLM refusal prompt.  
@@ -256,8 +246,6 @@ Migrations: **goose** (или golang-migrate), файлы в `migrations/`.
 | Variable | Example | Required |
 |----------|---------|----------|
 | `HTTP_ADDR` | `:8080` | yes |
-| `DATABASE_URL` | `postgres://…` | yes |
-| `REDIS_URL` | `redis://redis:6379/0` | yes |
 | `DEMO_TOKEN` | long random | yes |
 | `CORS_ORIGINS` | `https://copilot.example.ru` | yes (prod) |
 | `LLM_*` | see above | unless offline |
@@ -271,7 +259,7 @@ Migrations: **goose** (или golang-migrate), файлы в `migrations/`.
 |-------|------|
 | Unit calc | `go test ./internal/calc/...` |
 | Tools/mocks | `go test ./internal/tools/...` |
-| HTTP | `httptest` + testcontainers postgres (or sqlite for subset) |
+| HTTP | `go test` пакетов API |
 | Agent offline | `DEMO_OFFLINE=1` golden SSE snapshots |
 | Race | `go test -race ./...` |
 

@@ -83,7 +83,7 @@ Consumer Alert Worker считает признаки кассового раз�
 |------|------------|
 | Next.js | React Native (+ optional web) |
 | Go monolith (API+agents) | Go BFF + Python AI |
-| pgvector | Qdrant/Milvus |
+| лексический корпус в процессе | Qdrant/Milvus |
 | Cloud LLM | vLLM on-prem |
 | Mocks | Java adapters |
 | — | Kafka proactive |

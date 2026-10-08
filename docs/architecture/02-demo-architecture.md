@@ -2,7 +2,7 @@
 
 ## Обзор
 
-Монорепо: **Next.js** (web) + **Go API** (единственный backend) + Postgres/pgvector + Redis.  
+Монорепо: **Next.js** (web) + **Go API** (единственный backend). Сессия и черновики — память процесса. Корпус знаний — лексический индекс, вшитый в бинарь.  
 Банк и ФНС — in-process mocks с теми же tool-именами, что в production.  
 Детальная спецификация Go: [09-demo-backend-go.md](09-demo-backend-go.md).  
 Деплой на VPS: [../engineering/07-server-deployment.md](../engineering/07-server-deployment.md).
@@ -12,17 +12,17 @@ flowchart LR
   Browser[NextjsPWA]
   API[Go_copilot_api]
   Agents[Go_Agents_Router]
-  PG[(Postgres_pgvector)]
-  Redis[(Redis)]
+  Mem[MemoryStore]
+  KB[LexicalCorpus]
   LLM[CloudLLM_OpenAI_compatible]
   Mocks[MockAdapters]
 
   Browser -->|SSE_plus_REST| API
   API --> Agents
   Agents --> LLM
-  Agents --> PG
+  Agents --> Mem
+  Agents --> KB
   Agents --> Mocks
-  API --> Redis
 ```
 
 ## Компоненты
@@ -31,9 +31,9 @@ flowchart LR
 |-----------|-----------------|
 | `apps/web` | Landing, Home dashboard, chat GenUI, demo script |
 | `apps/api` | **Go**: HTTP, SSE chat, agents, tools, mocks, RAG |
-| `packages/shared` | Zod/JSON schemas: intents, tools, SDUI (контракт с фронтом) |
+| `packages/shared` | JSON-фикстура карточки налога, общий список намерений |
 | `deploy/` | prod compose, Nginx/Caddy, remote scripts |
-| pgvector | Чанки НК (урезанный корпус), FAQ тарифов |
+| `internal/rag` | лексический поиск по вшитому корпусу |
 | MockAdapters | transactions, 115-ФЗ, FNS debt, payment draft |
 
 ## Chat flow
@@ -47,22 +47,18 @@ flowchart LR
 
 ## Data stores (demo)
 
-- `users`, `profiles`, `conversations`, `messages`
-- `transactions` (seed)
-- `payment_drafts`
-- `documents` (legal uploads metadata)
-- `kb_chunks` (embeddings)
+Всё в памяти процесса: профиль, операции, черновики, история чата, загруженный договор. Корпус — JSONL внутри бинаря, без эмбеддингов.
 
 ## Config
 
 См. полный список в [09-demo-backend-go.md](09-demo-backend-go.md):  
-`LLM_*`, `DATABASE_URL`, `REDIS_URL`, `DEMO_TOKEN`, `CORS_ORIGINS`, `DEMO_OFFLINE`, …
+`LLM_*`, `DEMO_TOKEN`, `CORS_ORIGINS`, `DEMO_OFFLINE`, `UPLOAD_DIR`.
 
 ## Deploy demo
 
 | Env | How |
 |-----|-----|
-| Local | `docker compose up` — api + web + postgres + redis |
+| Local | `docker compose up` — api + web |
 | Server | Nginx/Caddy + TLS + DNS — [07-server-deployment.md](../engineering/07-server-deployment.md) |
 
 GPU не нужен. Один бинарь Go + Node web.

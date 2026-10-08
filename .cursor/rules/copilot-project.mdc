@@ -13,7 +13,7 @@ alwaysApply: true
 
 ## Стек
 
-- **Demo code:** Next.js 15 + **Go API** (agents/tools/SSE) + Postgres/pgvector + Redis. Не FastAPI.
+- **Demo code:** Next.js 15 + **Go API** (agents/tools/SSE), сессия и корпус в памяти процесса. Не FastAPI.
 - **Production (docs first):** React Native, Go BFF + Python AI + Java core, Kafka, vLLM on-prem, Qdrant/Milvus.
 - **Server:** готовить под Docker + Nginx/Caddy; см. `docs/engineering/07-server-deployment.md`.
 

@@ -2,7 +2,7 @@
 
 **Статус:** Ready for implementation  
 **Цель:** Питч-/чемпионат-ready web-приложение, доказывающее ценность Copilot на сценарии beauty-мастера.  
-**Стек:** Next.js 15 + **Go API** (agents/SSE) + Postgres/pgvector + Redis.  
+**Стек:** Next.js 15 + **Go API** (agents/SSE). Сессия и корпус — в памяти процесса.  
 Спека бэкенда: [../architecture/09-demo-backend-go.md](../architecture/09-demo-backend-go.md).  
 Сервер: [../engineering/07-server-deployment.md](../engineering/07-server-deployment.md).
 

@@ -111,4 +111,4 @@ Persona `masha_nails`:
 ## Retention / privacy
 
 - Prod: chat retention per bank policy; PII minimized in message logs (masked).  
-- Demo: wipeable SQLite/Postgres volume; no real PII.
+- Demo: данные показа живут в памяти процесса и пропадают при перезапуске. Реальных персональных данных нет.

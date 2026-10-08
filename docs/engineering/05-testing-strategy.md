@@ -7,7 +7,7 @@
 | Unit | `go test` `internal/calc`; Vitest formatters | + Java unit |
 | Contract | Zod (TS) ↔ Go structs / golden JSON SDUI | Pact/OpenAPI vs adapters |
 | Agent eval | Golden 20 tax Qs (`calc` + offline SSE) | Expanded + legal suite |
-| Integration | Go API + postgres testcontainers | NFT with mocks of core |
+| Integration | `go test` API с моками в памяти | NFT with mocks of core |
 | E2E | Playwright: landing → home → tax card | Detox/RN + bank UAT |
 | Security | Jailbreak suite smoke | Full red team + ИБ |
 

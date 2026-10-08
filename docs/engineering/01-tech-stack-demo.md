@@ -21,13 +21,10 @@ Chat client: native **SSE reader** к Go API (см. `docs/architecture/09-demo-b
 | Tech | Role |
 |------|------|
 | Go 1.22+ | Runtime |
-| chi (или echo) | HTTP router |
-| pgx | Postgres driver |
-| goose | SQL migrations |
-| redis (go-redis) | Rate limit / session |
+| chi | HTTP router |
 | slog | Structured JSON logs |
 | OpenAI-compatible HTTP client | LLM (OpenAI / OpenRouter / later vLLM) |
-| testcontainers / httptest | Tests |
+| httptest | Tests |
 
 Детали пакетов и агентов: [../architecture/09-demo-backend-go.md](../architecture/09-demo-backend-go.md).
 
@@ -35,9 +32,9 @@ Chat client: native **SSE reader** к Go API (см. `docs/architecture/09-demo-b
 
 | Tech | Role |
 |------|------|
-| Postgres 16 + pgvector | Primary + embeddings |
-| Redis 7 | Limits |
-| Cloud LLM via env | Chat; `DEMO_OFFLINE=1` fixtures |
+| Память процесса | Профиль, операции, черновики, история чата |
+| JSONL в бинаре | Корпус, лексический поиск |
+| Cloud LLM via env | Chat; `DEMO_OFFLINE=1` без ключа |
 | Provider abstraction in Go | Swap base URL → on-prem later |
 
 ## Tooling
@@ -45,7 +42,7 @@ Chat client: native **SSE reader** к Go API (см. `docs/architecture/09-demo-b
 - pnpm/npm workspaces (web + shared)  
 - Go modules (`apps/api`)  
 - Docker Compose (local + `deploy/` prod)  
-- Makefile: `up`, `seed`, `test`, `test-api`  
+- Makefile: `up`, `test`, `test-api`  
 - ESLint / Vitest (web); `go test -race` (api)
 
 ## Explicit non-choices (demo)
@@ -54,7 +51,7 @@ Chat client: native **SSE reader** к Go API (см. `docs/architecture/09-demo-b
 - Не Kafka  
 - Не React Native в Sprint A  
 - Не обязательный GPU  
-- Не публикация Postgres/Redis портов на VPS наружу  
+- Не публикация лишних портов на VPS наружу  
 
 ## Server
 

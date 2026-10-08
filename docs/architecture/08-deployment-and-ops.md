@@ -9,12 +9,11 @@
 
 | File | Use |
 |------|-----|
-| `docker-compose.yml` | local: `web`, `api` (Go), `postgres`, `redis` |
+| `docker-compose.yml` | local: `web`, `api` (Go) |
 | `deploy/docker-compose.prod.yml` | server + Nginx/Caddy TLS |
 
 ```text
 make up          # local compose
-make seed        # persona Маша (Go cmd/seed)
 make test-api    # go test ./...
 make test        # api + web
 ```
@@ -23,18 +22,18 @@ make test        # api + web
 
 | Env | LLM | Data | Edge |
 |-----|-----|------|------|
-| local | cloud key in `.env` | local postgres | optional |
-| server / pitch | cloud + `DEMO_OFFLINE` fallback | docker volumes | Nginx/Caddy TLS + DNS |
+| local | cloud key in `.env` or offline | memory | optional |
+| server / pitch | cloud + `DEMO_OFFLINE` fallback | memory | Nginx/Caddy TLS + DNS |
 
 ### Observability demo
 
 - `slog` JSON on Go (`request_id`, intent, latency).  
-- `/api/v1/health` + `/api/v1/ready` (db+redis).  
+- `/api/v1/health` + `/api/v1/ready` (память и корпус).  
 - Optional `/metrics` Prometheus.
 
 ### Fallback без LLM
 
-`DEMO_OFFLINE=1`: фикстуры SSE + SDUI из `apps/api/testdata/offline`.
+`DEMO_OFFLINE=1`: оркестратор отвечает шаблонами, суммы берёт из `internal/calc`.
 
 ---
 

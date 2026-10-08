@@ -26,7 +26,7 @@
 |------|------------|
 | Next.js 15, TS, Tailwind, SSE→Go | React Native (TS), Zustand, React Query |
 | **Go** API + agents + mocks | Go BFF, Python AI, Java/Spring core |
-| Postgres + pgvector, Redis | Kafka, Qdrant/Milvus, vLLM on-prem |
+| Память процесса, лексический корпус | Kafka, Qdrant/Milvus, vLLM on-prem |
 
 Детали: `docs/engineering/01-tech-stack-demo.md`, `docs/architecture/09-demo-backend-go.md`.  
 Деплой на VPS (когда будет SSH/домен): `docs/engineering/07-server-deployment.md`.

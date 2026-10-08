@@ -27,7 +27,7 @@
 |------|------------|
 | Web | Next.js 15, TypeScript, Tailwind, PWA |
 | API | один сервис на **Go** (агенты, tools, SSE, моки) |
-| Данные | in-memory store (Postgres/Redis в compose — опциональный профиль `full`) |
+| Данные | in-memory store (профиль, операции, черновики). Поиск по корпусу — лексический индекс в процессе |
 | LLM | OpenAI-compatible, с failover моделей; без ключа — `DEMO_OFFLINE=1` |
 | RAG | ~90 чанков в `apps/api/internal/rag/data/` |
 

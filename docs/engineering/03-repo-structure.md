@@ -19,7 +19,6 @@ AlphaBank_case_champ/
 │   │   └── package.json
 │   ├── api/                       # Go backend (module)
 │   │   ├── cmd/api/
-│   │   ├── cmd/seed/
 │   │   ├── internal/
 │   │   │   ├── agents/
 │   │   │   ├── adapters/
@@ -27,9 +26,6 @@ AlphaBank_case_champ/
 │   │   │   ├── httpserver/
 │   │   │   ├── tools/
 │   │   │   └── ...
-│   │   ├── migrations/
-│   │   ├── prompts/
-│   │   ├── testdata/
 │   │   ├── Dockerfile
 │   │   └── go.mod
 │   └── mobile/                    # RN later (prod track)

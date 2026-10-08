@@ -4,7 +4,7 @@
 
 **Goal:** Ship a pitch-ready AI Business Copilot web demo (beauty persona «Маша») with streaming chat, router agents, and Generative UI cards on mocked banking/FNS data.
 
-**Architecture:** Next.js 15 ↔ **Go API** (chi, agents, tools, SSE); shared Zod/JSON contracts; memory store (+ Postgres/Redis optional); OpenAI-compatible LLM client in Go. Spec: `docs/architecture/09-demo-backend-go.md`.
+**Architecture:** Next.js 15 ↔ **Go API** (chi, agents, tools, SSE); shared JSON contracts; memory store; OpenAI-compatible LLM client in Go. Spec: `docs/architecture/09-demo-backend-go.md`.
 
 **LLM:** `DEMO_OFFLINE=1` by default; with `LLM_API_KEY` + `DEMO_OFFLINE=0` narrative polish via `internal/llm`. Tax numbers always from `internal/calc`.
 
@@ -23,8 +23,8 @@
 ### Task 1: Monorepo scaffold (Next + Go)
 
 - [x] Initialize web (Next.js TS App Router) and Go API with `GET /api/v1/health` + `/api/v1/ready`
-- [x] Add Postgres+pgvector and Redis to Compose; api depends_on healthy db
-- [x] Wire `.env.example`: `DATABASE_URL`, `REDIS_URL`, `LLM_*`, `DEMO_TOKEN`, `CORS_ORIGINS`
+- [x] Compose: web + Go API. Сессия и корпус в памяти процесса
+- [x] `.env.example`: `LLM_*`, `DEMO_TOKEN`, `CORS_ORIGINS`, `DEMO_OFFLINE`
 - [x] Deploy stubs under `deploy/`
 - [x] 3D icons in `apps/web/public/icons/3d/`
 
@@ -36,7 +36,7 @@
 ### Task 3: DB migrations + seed persona
 
 - [x] Migration stub + memory seed `masha_nails` (profile, txn, piggy 6%)
-- [x] `cmd/seed` present; README documents offline memory default
+- [x] Сид Маши создаётся при старте API (`memory.NewSeeded`)
 
 ### Task 4: Calc + mock banking ports
 
