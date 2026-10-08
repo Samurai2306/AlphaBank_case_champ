@@ -105,6 +105,14 @@ func uploadDir() string {
 // LLMEndpoints builds the failover chain: primary model(s) + optional second provider.
 func (c Config) LLMEndpoints() []llm.Endpoint {
 	var out []llm.Endpoint
+	// No-key OpenAI-compatible route. Zen is locked to the official client,
+	// AI Gateway needs a card, and Pollinations answers 402 from Vercel.
+	if !envIsTrue("LLM_DISABLE_VIREONIX") {
+		out = append(out, llm.Endpoint{
+			Name: "vireonix", BaseURL: "https://vireonix.ai/v1",
+			APIKey: "none", Model: "auto", Provider: "vireonix",
+		})
+	}
 	if !envIsTrue("LLM_DISABLE_POLLINATIONS") {
 		polModels := splitCSV(env("POLLINATIONS_MODELS", ""))
 		if len(polModels) == 0 {

@@ -84,6 +84,8 @@ func (c *Client) SetEndpoints(eps []Endpoint) {
 				e.APIKey = "oidc"
 			case "pollinations":
 				e.APIKey = "anonymous"
+			case "vireonix":
+				e.APIKey = "none"
 			default:
 				continue
 			}
@@ -103,6 +105,9 @@ func detectProvider(baseURL string) string {
 	u := strings.ToLower(baseURL)
 	if strings.Contains(u, "opencode.ai/zen") {
 		return "opencode-zen"
+	}
+	if strings.Contains(u, "vireonix.ai") {
+		return "vireonix"
 	}
 	return "openai"
 }
@@ -317,6 +322,12 @@ func (c *Client) call(ctx context.Context, ep Endpoint, system, user string, tem
 		req.Header.Set("x-opencode-project", "global")
 		req.Header.Set("x-opencode-request", "msg_"+randHex(8))
 		req.Header.Set("x-opencode-session", "ses_"+randHex(8))
+	case "vireonix":
+		ua := c.UserAgent
+		if ua == "" {
+			ua = defaultUserAgent
+		}
+		req.Header.Set("User-Agent", ua)
 	case "pollinations":
 		req.Header.Set("Authorization", "Bearer "+ep.APIKey)
 		ua := c.UserAgent
