@@ -1,10 +1,7 @@
-.PHONY: api web seed test test-api up down
+.PHONY: api web test test-api up down
 
 api:
 	cd apps/api && go run ./cmd/api
-
-seed:
-	cd apps/api && go run ./cmd/seed
 
 test-api:
 	cd apps/api && go test ./...

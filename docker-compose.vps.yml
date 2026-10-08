@@ -10,7 +10,6 @@ services:
       DEMO_OFFLINE: ${DEMO_OFFLINE:-0}
       DEMO_TOKEN: ${DEMO_TOKEN:-demo-masha-token}
       HTTP_ADDR: ":8080"
-      USE_MEMORY_STORE: "1"
       # Primary: OpenCode Zen free tier (RU-reachable, OpenAI-compatible).
       # Model rotation + optional fallback keep answers alive when one upstream flaps.
       LLM_BASE_URL: ${LLM_BASE_URL:-https://opencode.ai/zen/v1}

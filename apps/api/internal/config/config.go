@@ -10,8 +10,6 @@ import (
 
 type Config struct {
 	HTTPAddr    string
-	DatabaseURL string
-	RedisURL    string
 	DemoToken   string
 	CORSOrigins []string
 	LLMBaseURL  string
@@ -20,12 +18,9 @@ type Config struct {
 	LLMProvider string
 	UploadDir   string
 	DemoOffline bool
-	LogLevel    string
-	UseMemory   bool
 }
 
 func Load() Config {
-	db := env("DATABASE_URL", "")
 	key := env("LLM_API_KEY", "")
 	base := env("LLM_BASE_URL", "")
 	provider := env("LLM_PROVIDER", "")
@@ -71,8 +66,6 @@ func Load() Config {
 
 	return Config{
 		HTTPAddr:    httpAddr(),
-		DatabaseURL: db,
-		RedisURL:    env("REDIS_URL", ""),
 		DemoToken:   env("DEMO_TOKEN", "demo-masha-token"),
 		CORSOrigins: splitCSV(env("CORS_ORIGINS", "http://localhost:3000")),
 		LLMBaseURL:  base,
@@ -81,8 +74,6 @@ func Load() Config {
 		LLMProvider: provider,
 		UploadDir:   uploadDir(),
 		DemoOffline: offline,
-		LogLevel:    env("LOG_LEVEL", "info"),
-		UseMemory:   envBool("USE_MEMORY_STORE", true) || db == "",
 	}
 }
 

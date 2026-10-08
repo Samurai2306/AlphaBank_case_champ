@@ -34,7 +34,6 @@ func TestVercelEnablesZenLLM(t *testing.T) {
 	t.Setenv("LLM_PROVIDER", "")
 	t.Setenv("LLM_MODEL", "")
 	t.Setenv("LLM_MODELS", "")
-	t.Setenv("DATABASE_URL", "")
 	cfg := Load()
 	if cfg.DemoOffline {
 		t.Fatal("expected live LLM on Vercel")
