@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -158,11 +159,6 @@ type chatResponse struct {
 			ReasoningContent string `json:"reasoning_content"`
 		} `json:"message"`
 	} `json:"choices"`
-}
-
-// Complete returns assistant text. Numbers for tax must still come from calc — pass them in facts.
-func (c *Client) Complete(ctx context.Context, system, user string) (string, error) {
-	return c.CompleteTemp(ctx, system, user, 0.55)
 }
 
 // CompleteTemp allows controlling creativity (router uses low temp; narrative uses higher).
@@ -343,6 +339,11 @@ func (c *Client) call(ctx context.Context, ep Endpoint, system, user string, tem
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(io.LimitReader(res.Body, 2<<20))
+	if ep.Provider == "pollinations" && (res.StatusCode == 402 || res.StatusCode == 403 || res.StatusCode == 429) {
+		if text, gerr := c.pollinationsGet(ctx, system, user); gerr == nil && strings.TrimSpace(text) != "" {
+			return strings.TrimSpace(text), nil
+		}
+	}
 	if res.StatusCode >= 300 {
 		return "", fmt.Errorf("status %d: %s", res.StatusCode, truncate(string(raw), 240))
 	}
@@ -360,6 +361,48 @@ func (c *Client) call(ctx context.Context, ep Endpoint, system, user string, tem
 	}
 	if text == "" {
 		return "", fmt.Errorf("empty llm response")
+	}
+	return text, nil
+}
+
+// pollinationsGet is the anonymous text API. The OpenAI-compatible POST
+// often answers 402 from Vercel while this route still returns text.
+func (c *Client) pollinationsGet(ctx context.Context, system, user string) (string, error) {
+	prompt := strings.TrimSpace(user)
+	if i := strings.Index(prompt, "QUESTION:"); i >= 0 {
+		prompt = strings.TrimSpace(prompt[i:])
+	}
+	prompt = truncate(prompt, 900)
+	sys := truncate(strings.TrimSpace(system), 500)
+	if prompt == "" {
+		return "", fmt.Errorf("empty prompt")
+	}
+	u := "https://text.pollinations.ai/" + url.PathEscape(prompt) + "?model=openai-fast"
+	if sys != "" {
+		u += "&system=" + url.QueryEscape(sys)
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+	if err != nil {
+		return "", err
+	}
+	ua := c.UserAgent
+	if ua == "" {
+		ua = defaultUserAgent
+	}
+	req.Header.Set("User-Agent", ua)
+	req.Header.Set("Accept", "text/plain")
+	res, err := c.HTTP.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+	raw, _ := io.ReadAll(io.LimitReader(res.Body, 64<<10))
+	if res.StatusCode >= 300 {
+		return "", fmt.Errorf("pollinations get status %d: %s", res.StatusCode, truncate(string(raw), 180))
+	}
+	text := strings.TrimSpace(string(raw))
+	if text == "" || strings.HasPrefix(text, "{") || strings.HasPrefix(text, "<") {
+		return "", fmt.Errorf("pollinations get empty")
 	}
 	return text, nil
 }
