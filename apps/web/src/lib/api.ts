@@ -217,18 +217,6 @@ export function getPayments() {
   }>("/payments");
 }
 
-export function getTaxCalendar() {
-  return apiFetch<{
-    period_label: string;
-    due_date: string;
-    days_left: number;
-    amount_due: number;
-    amount_saved: number;
-    amount_gap: number;
-    status: string;
-  }>("/calendar/tax");
-}
-
 export function getMonthReport() {
   return apiFetch<{
     period: string;

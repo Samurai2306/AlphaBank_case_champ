@@ -41,18 +41,6 @@ func TestEgressRejectsBadAdvice(t *testing.T) {
 	}
 }
 
-func TestNumbersPreserved(t *testing.T) {
-	src := "налог — 7 740 ₽ с оборота 180 000 ₽"
-	ok := "По режиму НПД налог 7740 рублей при обороте 180000"
-	bad := "Налог примерно пять тысяч при обороте сто тысяч"
-	if !NumbersPreserved(src, ok) {
-		t.Fatal("expected preserve")
-	}
-	if NumbersPreserved(src, bad) {
-		t.Fatal("expected reject rewritten numbers")
-	}
-}
-
 func TestSoftNumbersPreserved(t *testing.T) {
 	src := "аренда 40000, расход 200, цена 1500, налог 64.5, клиенты 2"
 	// Soft: large amounts kept, small ones may vary in wording.

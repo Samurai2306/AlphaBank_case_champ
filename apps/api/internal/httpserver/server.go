@@ -106,7 +106,6 @@ func New(cfg config.Config, store *memory.Store, log *slog.Logger) http.Handler 
 		r.Post("/api/v1/documents/legal", s.legalUpload)
 		r.Get("/api/v1/tasks", s.tasks)
 		r.Get("/api/v1/demo/script", s.tasks) // compat alias
-		r.Get("/api/v1/calendar/tax", s.taxCalendar)
 		r.Get("/api/v1/report/month", s.monthReport)
 		r.Get("/api/v1/piggy/contributions", s.piggyContributions)
 		r.Get("/api/v1/home", s.home)
@@ -699,40 +698,6 @@ func (s *Server) listPayments(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, map[string]any{"items": items})
 }
 
-func (s *Server) taxCalendar(w http.ResponseWriter, r *http.Request) {
-	sess := s.scope(r)
-	p := sess.Profile()
-	piggy := sess.Piggy()
-	now := time.Now()
-	// ENP due ~ 28th next month for previous period — simplified: 28th of current month
-	due := time.Date(now.Year(), now.Month(), 28, 0, 0, 0, 0, now.Location())
-	if now.Day() > 28 {
-		due = due.AddDate(0, 1, 0)
-	}
-	days := int(due.Sub(now).Hours() / 24)
-	if days < 0 {
-		days = 0
-	}
-	ceiling := calc.CalculateTax(calc.TaxInput{
-		Regime: calc.RegimeNPD, Income: p.MonthlyRevenueEstimate, ConservativeCeiling: true,
-	})
-	gap := round2(ceiling.TaxAmount - piggy.Balance)
-	if gap < 0 {
-		gap = 0
-	}
-	status := "on_track"
-	if gap > 0 && days <= 10 {
-		status = "attention"
-	}
-	if gap > ceiling.TaxAmount*0.5 && days <= 5 {
-		status = "urgent"
-	}
-	writeJSON(w, 200, domain.TaxCalendar{
-		PeriodLabel: monthRU(now), DueDate: due.Format("2006-01-02"), DaysLeft: days,
-		AmountDue: ceiling.TaxAmount, AmountSaved: piggy.Balance, AmountGap: gap, Status: status,
-	})
-}
-
 func (s *Server) monthReport(w http.ResponseWriter, r *http.Request) {
 	sess := s.scope(r)
 	items := sess.Transactions()
@@ -772,11 +737,6 @@ func (s *Server) piggyContributions(w http.ResponseWriter, r *http.Request) {
 		return items[i].BookedAt.After(items[j].BookedAt)
 	})
 	writeJSON(w, 200, map[string]any{"items": items})
-}
-
-func monthRU(t time.Time) string {
-	months := []string{"Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"}
-	return fmt.Sprintf("%s %d", months[int(t.Month())-1], t.Year())
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {

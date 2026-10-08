@@ -276,10 +276,6 @@ export function categoryCashbackTotal(
   return Math.round(sum * 100) / 100;
 }
 
-export function stripCategories(): CashbackCategory[] {
-  return CASHBACK_CATALOG.filter((c) => c.strip);
-}
-
 /** Prefer categories that appear in expenses when spinning the wheel. */
 export function spinCandidateCategories(items: TxnLike[]): CashbackCategory[] {
   const expenseCats = new Set(

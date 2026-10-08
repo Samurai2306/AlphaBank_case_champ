@@ -74,24 +74,6 @@ func CheckEgress(text string) bool {
 	return !egressBad.MatchString(normalize(text))
 }
 
-// NumbersPreserved ensures polished text still contains key numeric facts from the source.
-// Returns true if safe to use polished text.
-func NumbersPreserved(source, polished string) bool {
-	srcNums := significantNumbers(source)
-	if len(srcNums) == 0 {
-		return true
-	}
-	pol := compactDigits(polished)
-	kept := 0
-	for _, n := range srcNums {
-		if strings.Contains(pol, n) {
-			kept++
-		}
-	}
-	// Require majority of significant numbers to survive rewriting.
-	return kept*2 >= len(srcNums)
-}
-
 // SoftNumbersPreserved is looser: only large money-like amounts (≥4 digits) and INNs
 // must survive. Used when we prefer informative LLM rewriting over strict determinism.
 func SoftNumbersPreserved(source, polished string) bool {

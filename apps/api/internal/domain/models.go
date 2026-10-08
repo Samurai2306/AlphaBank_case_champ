@@ -96,14 +96,4 @@ type LegalDocument struct {
 	Quality  string      `json:"quality,omitempty"`
 }
 
-type TaxCalendar struct {
-	PeriodLabel   string  `json:"period_label"`
-	DueDate       string  `json:"due_date"`
-	DaysLeft      int     `json:"days_left"`
-	AmountDue     float64 `json:"amount_due"`
-	AmountSaved   float64 `json:"amount_saved"`
-	AmountGap     float64 `json:"amount_gap"`
-	Status        string  `json:"status"`
-}
-
 const Disclaimer = "Альфа-Бизнес: Старт. Рекомендации носят справочный характер и не заменяют консультацию специалиста или официальные разъяснения ФНС. Финальное решение — за вами."

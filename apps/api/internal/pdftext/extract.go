@@ -460,13 +460,6 @@ func limitRunes(s string, n int) string {
 	return string(r[:n]) + "\n…[текст обрезан для контекста модели]"
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 // HasText reports whether extraction found meaningful content.
 func HasText(raw []byte) bool {
 	return ExtractDetailed(raw).Chars >= 40

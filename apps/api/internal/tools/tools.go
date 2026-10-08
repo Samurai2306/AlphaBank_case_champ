@@ -25,10 +25,6 @@ type Registry struct {
 	Store Backend
 }
 
-func (r *Registry) GetClientTransactions() []domain.Transaction {
-	return r.Store.Transactions()
-}
-
 func (r *Registry) CheckCounterpartyRisk(inn string) domain.RiskResult {
 	return mockbank.CheckCounterpartyRisk(inn)
 }

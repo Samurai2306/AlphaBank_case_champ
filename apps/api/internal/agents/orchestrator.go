@@ -996,15 +996,6 @@ func tokens(text string) []StreamEvent {
 	return out
 }
 
-func textOnly(code, msg string) []StreamEvent {
-	return []StreamEvent{
-		{Event: "meta", Data: map[string]any{"intent": "GUARD"}},
-		{Event: "error", Data: map[string]any{"code": code, "message": msg}},
-		{Event: "token", Data: map[string]any{"text": msg}},
-		{Event: "done", Data: map[string]any{"finish_reason": "stop"}},
-	}
-}
-
 func containsAny(s string, keys ...string) bool {
 	for _, k := range keys {
 		if strings.Contains(s, normalizeRU(k)) {
@@ -1142,10 +1133,6 @@ func extractAllMoneyAmounts(s string) []float64 {
 		out = append(out, v)
 	}
 	return out
-}
-
-func extractAllNumbers(s string) []float64 {
-	return extractAllMoneyAmounts(s)
 }
 
 func hasExplicitRublesNear(s, key string) bool {

@@ -261,12 +261,6 @@ func formatPhoneDisplay(norm string) string {
 	return "+" + norm
 }
 
-func (s *Store) bucket(id string) *userData {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.users[id]
-}
-
 func (u *UserScope) data() *userData {
 	u.root.mu.RLock()
 	defer u.root.mu.RUnlock()
