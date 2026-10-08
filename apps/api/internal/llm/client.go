@@ -321,6 +321,14 @@ func (c *Client) call(ctx context.Context, ep Endpoint, system, user string, tem
 		req.Header.Set("x-opencode-project", "global")
 		req.Header.Set("x-opencode-request", "msg_"+randHex(8))
 		req.Header.Set("x-opencode-session", "ses_"+randHex(8))
+	case "pollinations":
+		req.Header.Set("Authorization", "Bearer "+ep.APIKey)
+		ua := c.UserAgent
+		if ua == "" {
+			ua = defaultUserAgent
+		}
+		req.Header.Set("User-Agent", ua)
+		req.Header.Set("Referer", "https://pollinations.ai/")
 	default:
 		req.Header.Set("Authorization", "Bearer "+ep.APIKey)
 		ua := c.UserAgent

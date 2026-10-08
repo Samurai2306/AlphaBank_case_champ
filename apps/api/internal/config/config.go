@@ -117,7 +117,9 @@ func (c Config) LLMEndpoints() []llm.Endpoint {
 	if !envIsTrue("LLM_DISABLE_POLLINATIONS") {
 		polModels := splitCSV(env("POLLINATIONS_MODELS", ""))
 		if len(polModels) == 0 {
-			polModels = []string{"openai", "openai-fast"}
+			// openai-fast answers inside a serverless budget. The larger
+			// "openai" model often returns 402 from Vercel before any text.
+			polModels = []string{"openai-fast"}
 		}
 		for i, m := range polModels {
 			name := "pollinations"

@@ -63,7 +63,7 @@ func (o *Orchestrator) enrichFacts(ctx context.Context, userMsg, intent string, 
 		intent, userMsg, strings.Join(widgets, ", "), facts,
 	)
 
-	text, err := o.LLM.CompleteTemp(ctx, system, user, 0.55)
+	text, err := o.LLM.CompleteBudget(ctx, system, user, 0.55, 420)
 	if err != nil {
 		return events
 	}

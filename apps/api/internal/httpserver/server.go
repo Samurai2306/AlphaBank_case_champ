@@ -638,7 +638,7 @@ func (s *Server) legalUpload(w http.ResponseWriter, r *http.Request) {
 Не выдумывай пункты, которых нет в тексте.`
 		user := fmt.Sprintf("Файл: %s\nКачество извлечения: %s (%s), страниц≈%d\nФлаги эвристики: %v\n\nDOCUMENT_MARKDOWN:\n%s",
 			header.Filename, extracted.Quality, extracted.Method, extracted.Pages, flags, llmBody)
-		if text, err := s.orch.LLM.CompleteTemp(r.Context(), system, user, 0.45); err == nil {
+		if text, err := s.orch.LLM.CompleteBudget(r.Context(), system, user, 0.45, 480); err == nil {
 			text = strings.TrimSpace(text)
 			if text != "" && guard.CheckEgress(text) {
 				narrative = text

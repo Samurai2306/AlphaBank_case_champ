@@ -764,7 +764,7 @@ func (o *Orchestrator) legalNarrative(ctx context.Context, msg, name, excerpt st
 			"Сделай прикладной разбор для переговоров. Цитируй документ. Не выдумывай отсутствующие пункты.",
 		msg, name, flags, body,
 	)
-	if text, err := o.LLM.CompleteTemp(ctx, legalSystemPrompt(), user, 0.4); err == nil {
+	if text, err := o.LLM.CompleteBudget(ctx, legalSystemPrompt(), user, 0.4, 480); err == nil {
 		text = strings.TrimSpace(text)
 		if text != "" && guard.CheckEgress(text) && !looksLikeWidgetGarbage(text) {
 			if !strings.Contains(strings.ToLower(text), "справоч") && !strings.Contains(strings.ToLower(text), "не заменяет") {
@@ -856,7 +856,7 @@ func (o *Orchestrator) answerFromKB(ctx context.Context, msg string, hits []rag.
 			profileLine, hist.String(), msg, ctxBlock.String(),
 		)
 		for attempt := 0; attempt < 2; attempt++ {
-			text, err := o.LLM.CompleteTemp(ctx, generalSystemPrompt(), user, 0.5)
+			text, err := o.LLM.CompleteBudget(ctx, generalSystemPrompt(), user, 0.5, 420)
 			if err != nil || strings.TrimSpace(text) == "" {
 				continue
 			}
