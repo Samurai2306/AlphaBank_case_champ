@@ -342,6 +342,8 @@ func (c *Client) call(ctx context.Context, ep Endpoint, system, user string, tem
 	if ep.Provider == "pollinations" && (res.StatusCode == 402 || res.StatusCode == 403 || res.StatusCode == 429) {
 		if text, gerr := c.pollinationsGet(ctx, system, user); gerr == nil && strings.TrimSpace(text) != "" {
 			return strings.TrimSpace(text), nil
+		} else if gerr != nil {
+			return "", fmt.Errorf("status %d; get: %v", res.StatusCode, gerr)
 		}
 	}
 	if res.StatusCode >= 300 {
@@ -372,8 +374,8 @@ func (c *Client) pollinationsGet(ctx context.Context, system, user string) (stri
 	if i := strings.Index(prompt, "QUESTION:"); i >= 0 {
 		prompt = strings.TrimSpace(prompt[i:])
 	}
-	prompt = truncate(prompt, 900)
-	sys := truncate(strings.TrimSpace(system), 500)
+	prompt = clipRunes(prompt, 280)
+	sys := clipRunes(strings.TrimSpace(system), 180)
 	if prompt == "" {
 		return "", fmt.Errorf("empty prompt")
 	}
@@ -405,6 +407,14 @@ func (c *Client) pollinationsGet(ctx context.Context, system, user string) (stri
 		return "", fmt.Errorf("pollinations get empty")
 	}
 	return text, nil
+}
+
+func clipRunes(s string, n int) string {
+	r := []rune(s)
+	if len(r) <= n {
+		return s
+	}
+	return string(r[:n])
 }
 
 func truncate(s string, n int) string {
