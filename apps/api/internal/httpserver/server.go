@@ -32,10 +32,10 @@ import (
 )
 
 type Server struct {
-	cfg    config.Config
-	store  *memory.Store
-	orch   *agents.Orchestrator
-	log    *slog.Logger
+	cfg   config.Config
+	store *memory.Store
+	orch  *agents.Orchestrator
+	log   *slog.Logger
 }
 
 func allowCORSOrigin(configured []string) func(*http.Request, string) bool {
@@ -79,7 +79,7 @@ func New(cfg config.Config, store *memory.Store, log *slog.Logger) http.Handler 
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   cfg.CORSOrigins,
 		AllowOriginFunc:  allowCORSOrigin(cfg.CORSOrigins),
-		AllowedMethods:   []string{"GET", "POST", "PATCH", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
 	}))
@@ -88,6 +88,19 @@ func New(cfg config.Config, store *memory.Store, log *slog.Logger) http.Handler 
 	r.Get("/api/v1/ready", s.ready)
 	r.Post("/api/v1/register", s.register)
 	r.Post("/api/v1/login", s.login)
+	r.Post("/api/v1/admin/login", s.adminLogin)
+	r.Group(func(r chi.Router) {
+		r.Use(s.adminAuth)
+		r.Get("/api/v1/admin/users", s.adminUsers)
+		r.Post("/api/v1/admin/users", s.adminCreateUser)
+		r.Get("/api/v1/admin/users/{id}", s.adminUser)
+		r.Patch("/api/v1/admin/users/{id}", s.adminPatchUser)
+		r.Delete("/api/v1/admin/users/{id}", s.adminDeleteUser)
+		r.Patch("/api/v1/admin/users/{id}/piggy", s.adminPatchPiggy)
+		r.Post("/api/v1/admin/users/{id}/drafts", s.adminCreateDraft)
+		r.Post("/api/v1/admin/users/{id}/drafts/{draftID}/confirm", s.adminConfirmDraft)
+		r.Post("/api/v1/admin/users/{id}/drafts/{draftID}/cancel", s.adminCancelDraft)
+	})
 
 	r.Group(func(r chi.Router) {
 		r.Use(s.auth)
@@ -431,18 +444,18 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 		)
 	}
 	writeJSON(w, 200, map[string]any{
-		"profile":          p,
-		"tax_due":          ceiling.TaxAmount,
-		"tax_estimate":     mixed.TaxAmount,
-		"tax_rate_label":   mixed.RateLabel,
-		"period":           period,
-		"piggy":            piggy,
-		"piggy_gap":        gap,
-		"tax_due_date":     due.Format("2006-01-02"),
-		"tax_days_left":    daysLeft,
-		"assumptions":      mixed.Assumptions,
-		"empty_cabinet":    empty,
-		"insights":         insights,
+		"profile":        p,
+		"tax_due":        ceiling.TaxAmount,
+		"tax_estimate":   mixed.TaxAmount,
+		"tax_rate_label": mixed.RateLabel,
+		"period":         period,
+		"piggy":          piggy,
+		"piggy_gap":      gap,
+		"tax_due_date":   due.Format("2006-01-02"),
+		"tax_days_left":  daysLeft,
+		"assumptions":    mixed.Assumptions,
+		"empty_cabinet":  empty,
+		"insights":       insights,
 	})
 }
 
@@ -646,19 +659,19 @@ func (s *Server) legalUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	sess.AppendChat("assistant", narrative)
 	writeJSON(w, 200, map[string]any{
-		"document_id":     name,
-		"document_name":   header.Filename,
-		"component":       "LegalFlagsList",
-		"mode":            mode,
-		"flags":           flags,
-		"excerpt":         excerpt,
-		"narrative":       narrative,
-		"text_chars":      extracted.Chars,
-		"pages":           extracted.Pages,
-		"extract_method":  extracted.Method,
-		"extract_quality": extracted.Quality,
+		"document_id":      name,
+		"document_name":    header.Filename,
+		"component":        "LegalFlagsList",
+		"mode":             mode,
+		"flags":            flags,
+		"excerpt":          excerpt,
+		"narrative":        narrative,
+		"text_chars":       extracted.Chars,
+		"pages":            extracted.Pages,
+		"extract_method":   extracted.Method,
+		"extract_quality":  extracted.Quality,
 		"extract_warnings": extracted.Warnings,
-		"disclaimer":      result["disclaimer"],
+		"disclaimer":       result["disclaimer"],
 	})
 }
 
@@ -719,15 +732,15 @@ func (s *Server) monthReport(w http.ResponseWriter, r *http.Request) {
 	}
 	tax := calc.CalculateTax(calc.TaxInput{Regime: calc.RegimeNPD, Income: sess.Profile().MonthlyRevenueEstimate})
 	writeJSON(w, 200, map[string]any{
-		"period":          now.Format("2006-01"),
-		"income":          round2(in),
-		"expense":         round2(out),
-		"net":             round2(in - out),
-		"service_count":   countIn,
+		"period":              now.Format("2006-01"),
+		"income":              round2(in),
+		"expense":             round2(out),
+		"net":                 round2(in - out),
+		"service_count":       countIn,
 		"expense_by_category": byCat,
-		"tax_estimate":    tax.TaxAmount,
-		"currency":        "RUB",
-		"empty":           len(items) == 0,
+		"tax_estimate":        tax.TaxAmount,
+		"currency":            "RUB",
+		"empty":               len(items) == 0,
 	})
 }
 

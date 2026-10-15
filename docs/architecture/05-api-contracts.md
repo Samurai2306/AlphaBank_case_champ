@@ -14,6 +14,16 @@
 | POST | `/api/v1/payments/draft/{id}/confirm` | Confirm (demo mock / prod sign) |
 | POST | `/api/v1/documents/legal` | Upload PDF |
 | GET | `/api/v1/health` | Health |
+| POST | `/api/v1/admin/login` | Демо-вход в админку (`password`, ответ `{token}`) |
+| GET | `/api/v1/admin/users` | Список кабинетов в памяти процесса |
+| POST | `/api/v1/admin/users` | Создать кабинет (`display_name`, `phone`, опционально город, сфера, режим, оборот) |
+| GET | `/api/v1/admin/users/{id}` | Карточка кабинета: профиль, копилка, черновики, последние реплики |
+| PATCH | `/api/v1/admin/users/{id}` | Сменить профиль кабинета |
+| DELETE | `/api/v1/admin/users/{id}` | Удалить кабинет |
+| PATCH | `/api/v1/admin/users/{id}/piggy` | Включить или выключить копилку (`enabled`) |
+| POST | `/api/v1/admin/users/{id}/drafts` | Создать черновик платёжки на стенде |
+| POST | `/api/v1/admin/users/{id}/drafts/{draftID}/confirm` | Подтвердить черновик: только статус `confirmed`, без перевода денег |
+| POST | `/api/v1/admin/users/{id}/drafts/{draftID}/cancel` | Отменить черновик, если он ещё не подтверждён |
 
 Auth: `Authorization: Bearer <jwt>` (demo: mock JWT).
 

@@ -104,6 +104,11 @@ function LoginInner() {
           Открыть кабинет
         </Link>
       </p>
+      <p className="relative z-10 mt-3 text-center text-xs text-ink/35">
+        <Link href="/admin" className="hover:text-ink/70">
+          Админка стенда
+        </Link>
+      </p>
     </main>
   );
 }

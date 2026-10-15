@@ -8,9 +8,7 @@
     "api": {
       "root": "apps/api",
       "framework": "go",
-      "functions": {
-        "cmd/api/main.go": { "maxDuration": 60 }
-      }
+      "entrypoint": "cmd/api/main.go"
     }
   },
   "rewrites": [

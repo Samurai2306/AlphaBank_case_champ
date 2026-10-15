@@ -14,6 +14,11 @@ func main() {
 	cfg := config.Load()
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	store := memory.NewSeededWithToken(cfg.DemoToken)
+	if err := store.AttachPersisterFromEnv(); err != nil {
+		log.Error("cabinet persist disabled", "err", err)
+	} else if store.Persistent() {
+		log.Info("cabinet persist enabled")
+	}
 	_ = os.MkdirAll(cfg.UploadDir, 0o755)
 
 	h := httpserver.New(cfg, store, log)

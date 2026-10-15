@@ -9,15 +9,17 @@ import (
 )
 
 type Config struct {
-	HTTPAddr    string
-	DemoToken   string
-	CORSOrigins []string
-	LLMBaseURL  string
-	LLMAPIKey   string
-	LLMModel    string
-	LLMProvider string
-	UploadDir   string
-	DemoOffline bool
+	HTTPAddr      string
+	DemoToken     string
+	CORSOrigins   []string
+	LLMBaseURL    string
+	LLMAPIKey     string
+	LLMModel      string
+	LLMProvider   string
+	UploadDir     string
+	DemoOffline   bool
+	AdminPassword string
+	AdminToken    string
 }
 
 func Load() Config {
@@ -65,15 +67,17 @@ func Load() Config {
 	}
 
 	return Config{
-		HTTPAddr:    httpAddr(),
-		DemoToken:   env("DEMO_TOKEN", "demo-masha-token"),
-		CORSOrigins: splitCSV(env("CORS_ORIGINS", "http://localhost:3000")),
-		LLMBaseURL:  base,
-		LLMAPIKey:   key,
-		LLMModel:    model,
-		LLMProvider: provider,
-		UploadDir:   uploadDir(),
-		DemoOffline: offline,
+		HTTPAddr:      httpAddr(),
+		DemoToken:     env("DEMO_TOKEN", "demo-masha-token"),
+		CORSOrigins:   splitCSV(env("CORS_ORIGINS", "http://localhost:3000")),
+		LLMBaseURL:    base,
+		LLMAPIKey:     key,
+		LLMModel:      model,
+		LLMProvider:   provider,
+		UploadDir:     uploadDir(),
+		DemoOffline:   offline,
+		AdminPassword: env("ADMIN_PASSWORD", "start-admin"),
+		AdminToken:    env("ADMIN_TOKEN", "demo-admin-token"),
 	}
 }
 
